@@ -55,6 +55,7 @@
     },
     "dependencies": {
         "@clangd/install": "0.1.20",
+        "tar": "^7.5.2",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
@@ -62,6 +63,7 @@
         "@types/mocha": "^10.0.7",
         "@types/node": "^24.10.1",
         "@types/sinon": "^21.0.0",
+        "@types/tar": "^6.1.13",
         "@types/vscode": "^1.75.0",
         "@vscode/test-electron": "^2.5.2",
         "@vscode/vsce": "^3.7.1",
@@ -201,6 +203,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Enable clangd language server features"
+                },
+                "clangd.useBuiltInClangdIfAvailable": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Use bundled clangd server if available (linux-x64, linux-arm64, win32-x64), otherwise use the clangd binary specified in clangd.path."
                 }
             }
         },

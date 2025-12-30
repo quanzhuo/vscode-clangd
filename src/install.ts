@@ -2,10 +2,14 @@
 // This wraps `@clangd/install` in the VSCode UI. See that package for more.
 
 import * as common from '@clangd/install';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import * as tar from 'tar';
 import * as vscode from 'vscode';
 
 import * as config from './config';
+import {extContext} from './extension';
 
 // Returns the clangd path to be used, or null if clangd is not installed.
 export async function activate(disposables: vscode.Disposable[],
@@ -138,6 +142,10 @@ class UI {
   }
 
   async resolveClangdPath() {
+    if (await this.useBuiltInClangd()) {
+      return;
+    }
+
     let p = await config.get<string>('path');
     // Backwards compatibility: if it's a relative path with a slash, interpret
     // relative to project root.
@@ -147,6 +155,41 @@ class UI {
     }
 
     this._clangdPath = p;
+  }
+
+  async useBuiltInClangd(): Promise<boolean> {
+    const workspaceConfig = vscode.workspace.getConfiguration('clangd');
+    if (!workspaceConfig.get<boolean>('useBuiltInClangdIfAvailable')) {
+      return false;
+    }
+
+    const extensionPath = extContext!.extensionPath;
+    const clangdExe = os.platform() === 'win32' ? 'clangd.exe' : 'clangd';
+    const clangdPath =
+        path.join(extensionPath, 'res', 'clangd', 'bin', clangdExe);
+    if (fs.existsSync(clangdPath)) {
+      this._clangdPath = clangdPath;
+      return true;
+    }
+
+    const tgzPath = path.join(extensionPath, 'res', 'clangd.tgz')
+    if (!fs.existsSync(tgzPath)) {
+      return false;
+    }
+
+    // Extract the tarball to the global storage path.
+    const extractPath = path.join(extensionPath, 'res');
+    await this.slow('Extracting bundled clangd...', tar.x({
+      file: tgzPath,
+      cwd: extractPath,
+      gzip: true,
+    }));
+
+    if (fs.existsSync(clangdPath)) {
+      this._clangdPath = clangdPath;
+      return true;
+    }
+    return false;
   }
 
   private _clangdPath?: string = undefined;

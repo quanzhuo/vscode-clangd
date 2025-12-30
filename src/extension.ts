@@ -9,11 +9,19 @@ import {get, update} from './config';
 let apiInstance: ClangdExtensionImpl|undefined;
 
 /**
+ * ExtensionContext should be passed via function arguments, but to make
+ * minimal changes to vscode-clangd and facilitate following upstream upgrades,
+ * we export extContext here.
+ */
+export let extContext: vscode.ExtensionContext|undefined;
+
+/**
  *  This method is called when the extension is activated. The extension is
  *  activated the very first time a command is executed.
  */
 export async function activate(context: vscode.ExtensionContext):
     Promise<ClangdExtension> {
+  extContext = context;
   const outputChannel = vscode.window.createOutputChannel('clangd');
   context.subscriptions.push(outputChannel);
 

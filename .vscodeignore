@@ -5,3 +5,7 @@
 !icon.png
 !out/bundle.js
 !package.json
+!depends.json
+!LICENSE
+!ThirdPartyNotices.txt
+!res
