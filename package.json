@@ -10,6 +10,7 @@
     "engines": {
         "vscode": "^1.75.0"
     },
+    "downloadUrl": "https://gitee.com/openKylin/kylin-clangd/releases",
     "categories": [
         "Programming Languages",
         "Linters",
@@ -20,7 +21,13 @@
         "C++",
         "clang",
         "clangd",
-        "LLVM"
+        "LLVM",
+        "clang-tidy",
+        "clang-format",
+        "KylinIdeDev",
+        "KylinIdeDevCYuYan",
+        "KylinIdeDevCPlusPlus",
+        "KylinIdeDevEdit"
     ],
     "activationEvents": [
         "onLanguage:c",

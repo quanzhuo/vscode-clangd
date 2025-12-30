@@ -1,0 +1,22 @@
+{
+    "deb": {
+        "default_arch": {
+            "default_os": {
+                "clangd": {}
+            }
+        },
+        "loongarch64": {
+            "default_os": {
+                "clangd": {},
+                "libclang-common-8-dev": {}
+            }
+        }
+    },
+    "rpm": {
+        "default_arch": {
+            "default_os": {
+                "clang-tools-extra": {}
+            }
+        }
+    }
+}
