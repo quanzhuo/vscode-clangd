@@ -83,7 +83,8 @@ export class ClangdContext implements vscode.Disposable {
       Promise<ClangdLanguageClient> {
     const useScriptAsExecutable =
         await config.get<boolean>('useScriptAsExecutable');
-    let clangdArguments = await config.get<string[]>('arguments');
+    // let clangdArguments = await config.get<string[]>('arguments');
+    let clangdArguments = await ClangdContext.getClangdArgs();
     if (useScriptAsExecutable) {
       let quote = (str: string) => { return `"${str}"`; };
       clangdPath = quote(clangdPath)
@@ -285,6 +286,25 @@ export class ClangdContext implements vscode.Disposable {
 
   clientIsRunning() {
     return this.client && this.client.state == vscodelc.State.Running;
+  }
+
+  static async getClangdArgs(): Promise<string[]> {
+    const args = await config.get<string[]>('arguments');
+
+    if (!args.some(arg => arg.startsWith('--header-insertion'))) {
+      const headerInsertion = await config.get<string>('headerInsertion');
+      if (headerInsertion === 'never') {
+        args.push('--header-insertion=never');
+      }
+    }
+
+    if (!args.some(arg => arg.startsWith('--clang-tidy'))) {
+      const clangTidyArgs: number =
+          await config.get<boolean>('enableClangTidyDiagnostic') ? 1 : 0;
+      args.push(`--clang-tidy=${clangTidyArgs}`);
+    }
+
+    return args;
   }
 
   dispose() {

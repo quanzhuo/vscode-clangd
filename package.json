@@ -208,6 +208,24 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Use bundled clangd server if available (linux-x64, linux-arm64, win32-x64), otherwise use the clangd binary specified in clangd.path."
+                },
+                "clangd.headerInsertion": {
+                    "type": "string",
+                    "default": "iwyu",
+                    "description": "Controls how clangd inserts missing #include directives.",
+                    "enum": [
+                        "iwyu",
+                        "never"
+                    ],
+                    "enumDescriptions": [
+                        "Always include the canonical header, even if it's already transitively included",
+                        "Never insert missing #include directives automatically"
+                    ]
+                },
+                "clangd.enableClangTidyDiagnostic": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable clang-tidy diagnostics"
                 }
             }
         },
