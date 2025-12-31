@@ -5,12 +5,14 @@ import * as ast from './ast';
 import {CMakeTools} from './cmakeTools';
 import * as config from './config';
 import * as configFileWatcher from './config-file-watcher';
+import {extContext} from './extension';
 import * as fileStatus from './file-status';
 import * as inactiveRegions from './inactive-regions';
 import * as inlayHints from './inlay-hints';
 import * as install from './install';
 import * as memoryUsage from './memory-usage';
 import * as openConfig from './open-config';
+import {QMakeTools} from './qmakeToolsApi';
 import * as switchSourceHeader from './switch-source-header';
 import * as symbolInfo from './symbol-info';
 import * as typeHierarchy from './type-hierarchy';
@@ -218,12 +220,34 @@ export class ClangdContext implements vscode.Disposable {
 
   private static async setCompilationDatabasePath(
       clientOptions: vscodelc.LanguageClientOptions) {
+    if (!vscode.workspace.workspaceFolders) {
+      return;
+    }
+
     const cmakeTools = new CMakeTools();
     await cmakeTools.init();
 
-    if (vscode.workspace.workspaceFolders) {
+    if (cmakeTools.buildDirectory) {
       clientOptions.initializationOptions.compilationDatabasePath =
           cmakeTools.buildDirectory;
+      return;
+    }
+
+    // on linux, try qmake-tools extension if available
+    if (process.platform === 'linux') {
+      let qmakeTools: QMakeTools|undefined;
+      const cmakeFiles =
+          await vscode.workspace.findFiles('CMakeLists.txt', undefined, 1);
+      const proFiles = await vscode.workspace.findFiles('*.pro', undefined, 1);
+      if (cmakeFiles.length === 0 && proFiles.length > 0) {
+        qmakeTools = new QMakeTools(extContext!);
+        await qmakeTools.init();
+
+        if (qmakeTools.buildDirectory) {
+          clientOptions.initializationOptions.compilationDatabasePath =
+              qmakeTools.buildDirectory;
+        }
+      }
     }
   }
 
