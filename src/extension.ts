@@ -5,6 +5,7 @@ import {ClangdExtension} from '../api/vscode-clangd';
 import {ClangdExtensionImpl} from './api';
 import {ClangdContext} from './clangd-context';
 import {get, update} from './config';
+import {activateYamlSupport} from './yaml-support';
 
 let apiInstance: ClangdExtensionImpl|undefined;
 
@@ -123,6 +124,8 @@ export async function activate(context: vscode.ExtensionContext):
       }
     }, 5000);
   }
+
+  activateYamlSupport(context);
 
   apiInstance = new ClangdExtensionImpl(clangdContext?.client);
   return apiInstance;
