@@ -222,6 +222,12 @@
                 "clangd.useBuiltInClangdIfAvailable": {
                     "type": "boolean",
                     "default": true,
+                    "description": "Use bundled clangd server if available (linux-x64, linux-arm64, win32-x64), otherwise use the clangd binary specified in clangd.path.",
+                    "deprecationMessage": "Please use clangd.preferBundledClangd instead."
+                },
+                "clangd.preferBundledClangd": {
+                    "type": "boolean",
+                    "default": true,
                     "description": "Use bundled clangd server if available (linux-x64, linux-arm64, win32-x64), otherwise use the clangd binary specified in clangd.path."
                 },
                 "clangd.headerInsertion": {

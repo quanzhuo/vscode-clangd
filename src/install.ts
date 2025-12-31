@@ -142,7 +142,7 @@ class UI {
   }
 
   async resolveClangdPath() {
-    if (await this.useBuiltInClangd()) {
+    if (await this.useBundledClangd()) {
       return;
     }
 
@@ -157,9 +157,20 @@ class UI {
     this._clangdPath = p;
   }
 
-  async useBuiltInClangd(): Promise<boolean> {
+  async useBundledClangd(): Promise<boolean> {
     const workspaceConfig = vscode.workspace.getConfiguration('clangd');
-    if (!workspaceConfig.get<boolean>('useBuiltInClangdIfAvailable')) {
+    const inspectNew = workspaceConfig.inspect<boolean>('preferBundledClangd');
+    const newIsSet = inspectNew?.globalValue !== undefined ||
+                     inspectNew?.workspaceValue !== undefined ||
+                     inspectNew?.workspaceFolderValue !== undefined;
+
+    // `useBuiltInClangdIfAvailable` renamed to `preferBundledClangd` since
+    // v0.5.0 but we still support the old setting for backwards compatibility.
+    const useBundled =
+        newIsSet ? workspaceConfig.get<boolean>('preferBundledClangd')
+                 : workspaceConfig.get<boolean>('useBuiltInClangdIfAvailable');
+
+    if (!useBundled) {
       return false;
     }
 
