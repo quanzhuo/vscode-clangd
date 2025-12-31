@@ -2,7 +2,7 @@
     "name": "kylin-clangd",
     "displayName": "Kylin Clangd",
     "description": "Fork of vscode-clangd, C/C++ completion, navigation, and insights",
-    "version": "0.3.2",
+    "version": "0.5.0",
     "publisher": "KylinIdeTeam",
     "license": "MIT",
     "homepage": "https://github.com/quanzhuo/vscode-clangd",
@@ -114,7 +114,7 @@
         ],
         "configuration": {
             "type": "object",
-            "title": "clangd",
+            "title": "Kylin Clangd",
             "properties": {
                 "clangd.path": {
                     "type": "string",
@@ -264,101 +264,101 @@
         "commands": [
             {
                 "command": "clangd.switchheadersource",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Switch Between Source/Header"
             },
             {
                 "command": "clangd.install",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Download language server"
             },
             {
                 "command": "clangd.update",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Check for language server update"
             },
             {
                 "command": "clangd.activate",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Manually activate extension"
             },
             {
                 "command": "clangd.restart",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Restart language server"
             },
             {
                 "command": "clangd.shutdown",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Shutdown language server"
             },
             {
                 "command": "clangd.typeHierarchy",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Open Type Hierarchy"
             },
             {
                 "command": "clangd.typeHierarchy.viewParents",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Types: Show Base Classes",
                 "icon": "$(triangle-up)"
             },
             {
                 "command": "clangd.typeHierarchy.viewChildren",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Types: Show Derived Classes",
                 "icon": "$(triangle-down)"
             },
             {
                 "command": "clangd.typeHierarchy.close",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "enablement": "clangd.typeHierarchyView.visible",
                 "title": "Close type hierarchy view",
                 "icon": "$(panel-close)"
             },
             {
                 "command": "clangd.memoryUsage",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Show memory usage",
                 "enablement": "clangd.memoryUsage.supported",
                 "icon": "$(refresh)"
             },
             {
                 "command": "clangd.memoryUsage.close",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "enablement": "clangd.memoryUsage.visible",
                 "title": "Close memory usage view",
                 "icon": "$(panel-close)"
             },
             {
                 "command": "clangd.ast",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Show AST",
                 "enablement": "clangd.ast.supported",
                 "icon": "$(list-tree)"
             },
             {
                 "command": "clangd.ast.close",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "enablement": "clangd.ast.visible",
                 "title": "Close AST view",
                 "icon": "$(panel-close)"
             },
             {
                 "command": "clangd.projectConfig",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Open project configuration file",
                 "icon": "$(gear)"
             },
             {
                 "command": "clangd.userConfig",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Open user configuration file",
                 "icon": "$(gear)"
             },
             {
                 "command": "clangd.inlayHints.toggle",
-                "category": "clangd",
+                "category": "Kylin Clangd",
                 "title": "Toggle inlay hints",
                 "enablement": "clangd.inlayHints.supported"
             },

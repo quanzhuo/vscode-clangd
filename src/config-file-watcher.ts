@@ -60,7 +60,7 @@ async function createClangdConfigFile(context: ClangdContext) {
 
         for (const item of items) {
           const fileFrom =
-              path.join(extContext!.extensionPath, 'res', item.label);
+              path.join(extContext!.extensionPath, 'res', 'config', item.label);
           const filePath =
               path.join(workspaceFolders[0].uri.fsPath, item.label);
 

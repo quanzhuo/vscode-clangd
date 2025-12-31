@@ -209,8 +209,8 @@ export class ClangdContext implements vscode.Disposable {
     // Set compilationDatabasePath from CMake Tools extension if available.
     await ClangdContext.setCompilationDatabasePath(clientOptions);
 
-    const client = new ClangdLanguageClient('Clang Language Server',
-                                            serverOptions, clientOptions);
+    const client =
+        new ClangdLanguageClient('Kylin Clangd', serverOptions, clientOptions);
     client.clientOptions.errorHandler = client.createDefaultErrorHandler(
         // max restart count
         await config.get<boolean>('restartAfterCrash') ? /*default*/ 4 : 0);

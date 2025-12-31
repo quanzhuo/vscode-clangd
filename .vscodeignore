@@ -8,4 +8,6 @@
 !depends.json
 !LICENSE
 !ThirdPartyNotices.txt
-!res
+!res/schemas/**
+!res/config/**
+!res/clangd.tgz

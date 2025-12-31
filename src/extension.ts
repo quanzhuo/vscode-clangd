@@ -23,7 +23,7 @@ export let extContext: vscode.ExtensionContext|undefined;
 export async function activate(context: vscode.ExtensionContext):
     Promise<ClangdExtension> {
   extContext = context;
-  const outputChannel = vscode.window.createOutputChannel('clangd');
+  const outputChannel = vscode.window.createOutputChannel('Kylin Clangd');
   context.subscriptions.push(outputChannel);
 
   let clangdContext: ClangdContext|null = null;
