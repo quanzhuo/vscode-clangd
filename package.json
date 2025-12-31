@@ -331,7 +331,12 @@
             {
                 "command": "clangd.registerDocumentationProvider",
                 "category": "Kylin Clangd",
-                "enablement": "false"
+                "title": "Register documentation provider"
+            },
+            {
+                "command": "clangd.createClangdConfigFile",
+                "category": "Kylin Clangd",
+                "title": "Create clangd configuration file in workspace folder"
             }
         ],
         "keybindings": [
@@ -422,6 +427,10 @@
                 {
                     "command": "clangd.registerDocumentationProvider",
                     "when": "false"
+                },
+                {
+                    "command": "clangd.createClangdConfigFile",
+                    "when": "true"
                 }
             ]
         },

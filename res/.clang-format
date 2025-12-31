@@ -1,0 +1,31 @@
+# base style
+BasedOnStyle: LLVM
+
+# indent
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+
+# header/using sort
+SortIncludes: CaseInsensitive
+SortUsingDeclarations: true
+
+# constructor initializer settings
+PackConstructorInitializers: Never
+BreakConstructorInitializersBeforeComma: true
+
+# line length settings
+ColumnLimit: 0
+
+# macro alignment settings
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+  PadOperators: true
+
+AlignEscapedNewlines: Right
+
+# for more options, type ctrl + space to bring up the auto-completion list

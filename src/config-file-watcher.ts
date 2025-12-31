@@ -1,13 +1,74 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/node';
 
 import {ClangdContext} from './clangd-context';
 import * as config from './config';
+import {extContext} from './extension';
 
 export async function activate(context: ClangdContext) {
   if (await config.get<string>('onConfigChanged') !== 'ignore') {
     context.client.registerFeature(new ConfigFileWatcherFeature(context));
   }
+
+  context.subscriptions.push(
+      vscode.commands.registerCommand(
+          'clangd.createClangdConfigFile',
+          async () => { await createClangdConfigFile(context); }),
+  );
+}
+
+class ClangdConfigFilePickItem implements vscode.QuickPickItem {
+  constructor(
+      public label: string,
+      public detail?: string,
+      public picked?: boolean,
+  ) {}
+}
+
+async function createClangdConfigFile(context: ClangdContext) {
+  await vscode.window
+      .showQuickPick(
+          [
+            new ClangdConfigFilePickItem(
+                '.clangd',
+                '.clangd is used to configure clangd and requires clangd version 11 or later.',
+                true),
+            new ClangdConfigFilePickItem(
+                '.clang-tidy',
+                '.clang-tidy is used to configure clang-tidy diagnostics',
+                true),
+            new ClangdConfigFilePickItem(
+                '.clang-format',
+                '.clang-format is used to configure clangd\'s code formatting style',
+                true),
+          ],
+          {
+            title: 'Select configure files to create in the workspace folder',
+            canPickMany: true,
+            ignoreFocusOut: true,
+          })
+      .then(async (items) => {
+        if (!items) {
+          return;
+        }
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders) {
+          return;
+        }
+
+        for (const item of items) {
+          const fileFrom =
+              path.join(extContext!.extensionPath, 'res', item.label);
+          const filePath =
+              path.join(workspaceFolders[0].uri.fsPath, item.label);
+
+          if (!fs.existsSync(filePath)) {
+            fs.copyFileSync(fileFrom, filePath);
+          }
+        }
+      });
 }
 
 // Clangd extension capabilities.

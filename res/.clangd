@@ -1,0 +1,20 @@
+CompileFlags:
+    Add: [
+            # clang warning flags, these flags will be added to the clang command line when clangd analyze the code.
+            -Wunused-variable,
+            -Winfinite-recursion,
+            -Warray-bounds,
+            -Wreturn-stack-address,
+            -Werror=implicit-function-declaration,
+            -Wshadow,
+            -Wshadow-field-in-constructor-modified,
+            -Wshadow-ivar,
+            -Wuninitialized,
+            -Wunused-label,
+            -Wunused-lambda-capture,
+
+            # You can also add header include paths here, each prefixed with '-I', one path per line, like this:
+            # -I/usr/include
+        ]
+
+# for more options, type ctrl + space to bring up the auto-completion list
