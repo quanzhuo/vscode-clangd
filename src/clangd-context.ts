@@ -11,6 +11,7 @@ import * as install from './install';
 import * as memoryUsage from './memory-usage';
 import * as openConfig from './open-config';
 import * as switchSourceHeader from './switch-source-header';
+import * as symbolInfo from './symbol-info';
 import * as typeHierarchy from './type-hierarchy';
 
 export const clangdDocumentSelector = [
@@ -231,6 +232,7 @@ export class ClangdContext implements vscode.Disposable {
     console.log('Clang Language Server is now active!');
     fileStatus.activate(this);
     switchSourceHeader.activate(this);
+    symbolInfo.activate(this);
   }
 
   get visibleClangdEditors(): vscode.TextEditor[] {

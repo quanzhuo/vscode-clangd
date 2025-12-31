@@ -322,6 +322,16 @@
                 "category": "clangd",
                 "title": "Toggle inlay hints",
                 "enablement": "clangd.inlayHints.supported"
+            },
+            {
+                "command": "clangd.showDocumentation",
+                "category": "Kylin Clangd",
+                "title": "Show symbol documentation under cursor"
+            },
+            {
+                "command": "clangd.registerDocumentationProvider",
+                "category": "Kylin Clangd",
+                "enablement": "false"
             }
         ],
         "keybindings": [
@@ -335,6 +345,11 @@
                 "command": "clangd.typeHierarchy",
                 "key": "Shift+Alt+t",
                 "when": "(resourceLangId == cpp || resourceLangId == cuda-cpp || resourceLangId == objective-c || resourceLangId == objective-cpp) && editorTextFocus"
+            },
+            {
+                "command": "clangd.showDocumentation",
+                "key": "Shift+f1",
+                "when": "editorTextFocus && (editorLangId == cpp || editorLangId == c)"
             }
         ],
         "menus": {
@@ -399,6 +414,14 @@
                 {
                     "command": "clangd.memoryUsage",
                     "when": "clangd.memoryUsage.supported"
+                },
+                {
+                    "command": "clangd.showDocumentation",
+                    "when": "editorTextFocus && (editorLangId == cpp || editorLangId == c)"
+                },
+                {
+                    "command": "clangd.registerDocumentationProvider",
+                    "when": "false"
                 }
             ]
         },
