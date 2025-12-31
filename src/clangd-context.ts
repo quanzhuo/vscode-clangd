@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/node';
 
 import * as ast from './ast';
+import {CMakeTools} from './cmakeTools';
 import * as config from './config';
 import * as configFileWatcher from './config-file-watcher';
 import * as fileStatus from './file-status';
@@ -202,6 +203,9 @@ export class ClangdContext implements vscode.Disposable {
       },
     };
 
+    // Set compilationDatabasePath from CMake Tools extension if available.
+    await ClangdContext.setCompilationDatabasePath(clientOptions);
+
     const client = new ClangdLanguageClient('Clang Language Server',
                                             serverOptions, clientOptions);
     client.clientOptions.errorHandler = client.createDefaultErrorHandler(
@@ -210,6 +214,17 @@ export class ClangdContext implements vscode.Disposable {
     client.registerFeature(new EnableEditsNearCursorFeature);
 
     return client;
+  }
+
+  private static async setCompilationDatabasePath(
+      clientOptions: vscodelc.LanguageClientOptions) {
+    const cmakeTools = new CMakeTools();
+    await cmakeTools.init();
+
+    if (vscode.workspace.workspaceFolders) {
+      clientOptions.initializationOptions.compilationDatabasePath =
+          cmakeTools.buildDirectory;
+    }
   }
 
   private constructor(subscriptions: vscode.Disposable[],
