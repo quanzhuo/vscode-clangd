@@ -1,7 +1,7 @@
 {
     "name": "kylin-clangd",
-    "displayName": "Kylin Clangd",
-    "description": "Fork of vscode-clangd, C/C++ completion, navigation, and insights",
+    "displayName": "%displayName%",
+    "description": "%description%",
     "version": "0.5.0",
     "publisher": "KylinIdeTeam",
     "license": "MIT",
@@ -36,6 +36,7 @@
         "onLanguage:objective-c",
         "onLanguage:objective-cpp"
     ],
+    "l10n": "./l10n",
     "main": "./out/bundle",
     "scripts": {
         "esbuild": "esbuild ./src/extension.ts --bundle --outfile=out/bundle.js --external:@aws-sdk/client-s3 --external:vscode --format=cjs --platform=node --main-fields=module,main --alias:vscode-json-languageservice=vscode-json-languageservice/lib/esm/jsonLanguageService.js --alias:vscode-json-languageservice/lib/umd/services/jsonValidation=vscode-json-languageservice/lib/esm/services/jsonValidation.js --alias:vscode-json-languageservice/lib/umd/services/jsonSchemaService=vscode-json-languageservice/lib/esm/services/jsonSchemaService.js --alias:vscode-json-languageservice/lib/umd/services/jsonDocumentSymbols=vscode-json-languageservice/lib/esm/services/jsonDocumentSymbols.js --alias:vscode-json-languageservice/lib/umd/services/jsonLinks=vscode-json-languageservice/lib/esm/services/jsonLinks.js",
@@ -86,7 +87,7 @@
     "capabilities": {
         "untrustedWorkspaces": {
             "supported": false,
-            "description": "Clangd isn't safe to run on untrusted code as it embeds clang as a parser. Parsing source files as one navigates a code base, carries the risk of being exploited."
+            "description": "%capabilities.untrustedWorkspaces.description%"
         }
     },
     "contributes": {
@@ -114,19 +115,19 @@
         ],
         "configuration": {
             "type": "object",
-            "title": "Kylin Clangd",
+            "title": "%displayName%",
             "properties": {
                 "clangd.path": {
                     "type": "string",
                     "default": "clangd",
                     "scope": "machine-overridable",
-                    "description": "The path to clangd executable, e.g.: /usr/bin/clangd."
+                    "description": "%clangd.path.description%"
                 },
                 "clangd.useScriptAsExecutable": {
                     "type": "boolean",
                     "default": false,
                     "scope": "machine-overridable",
-                    "description": "Allows the path to be a script e.g.: clangd.sh."
+                    "description": "%clangd.useScriptAsExecutable.description%"
                 },
                 "clangd.arguments": {
                     "type": "array",
@@ -134,17 +135,17 @@
                     "items": {
                         "type": "string"
                     },
-                    "description": "Arguments for clangd server."
+                    "description": "%clangd.arguments.description%"
                 },
                 "clangd.trace": {
                     "type": "string",
-                    "description": "Names a file that clangd should log a performance trace to, in chrome trace-viewer JSON format."
+                    "description": "%clangd.trace.description%"
                 },
                 "clangd.semanticHighlighting": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Enable semantic highlighting in clangd.",
-                    "deprecationMessage": "Legacy semanticHighlights is no longer supported. Please use `editor.semanticHighlighting.enabled` instead."
+                    "description": "%clangd.semanticHighlighting.description%",
+                    "deprecationMessage": "%clangd.semanticHighlighting.deprecationMessage%"
                 },
                 "clangd.fallbackFlags": {
                     "type": "array",
@@ -152,108 +153,108 @@
                     "items": {
                         "type": "string"
                     },
-                    "description": "Extra clang flags used to parse files when no compilation database is found."
+                    "description": "%clangd.fallbackFlags.description%"
                 },
                 "clangd.serverCompletionRanking": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Always rank completion items on the server as you type. This produces more accurate results at the cost of higher latency than client-side filtering."
+                    "description": "%clangd.serverCompletionRanking.description%"
                 },
                 "clangd.restartAfterCrash": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Auto restart clangd (up to 4 times) if it crashes."
+                    "description": "%clangd.restartAfterCrash.description%"
                 },
                 "clangd.checkUpdates": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Check for language server updates on startup."
+                    "description": "%clangd.checkUpdates.description%"
                 },
                 "clangd.onConfigChanged": {
                     "type": "string",
                     "default": "restart",
-                    "description": "What to do when clangd configuration files are changed. Ignored for clangd 12+, which can reload such files itself; however, this can be overridden with clangd.onConfigChangedForceEnable.",
+                    "description": "%clangd.onConfigChanged.description%",
                     "enum": [
                         "prompt",
                         "restart",
                         "ignore"
                     ],
                     "enumDescriptions": [
-                        "Prompt the user for restarting the server",
-                        "Automatically restart the server",
-                        "Do nothing"
+                        "%clangd.onConfigChanged.enumDescriptions.0%",
+                        "%clangd.onConfigChanged.enumDescriptions.1%",
+                        "%clangd.onConfigChanged.enumDescriptions.2%"
                     ]
                 },
                 "clangd.onConfigChangedForceEnable": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Force enable of \"On Config Changed\" option regardless of clangd version."
+                    "description": "%clangd.onConfigChangedForceEnable.description%"
                 },
                 "clangd.detectExtensionConflicts": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Warn about conflicting extensions and suggest disabling them."
+                    "description": "%clangd.detectExtensionConflicts.description%"
                 },
                 "clangd.inactiveRegions.useBackgroundHighlight": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Use a background highlight rather than opacity to identify inactive preprocessor regions."
+                    "description": "%clangd.inactiveRegions.useBackgroundHighlight.description%"
                 },
                 "clangd.inactiveRegions.opacity": {
                     "type": "number",
                     "default": 0.55,
-                    "description": "Opacity of inactive regions (used only if clangd.inactiveRegions.useBackgroundHighlight=false)"
+                    "description": "%clangd.inactiveRegions.opacity.description%"
                 },
                 "clangd.enableCodeCompletion": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Enable code completion provided by the language server"
+                    "description": "%clangd.enableCodeCompletion.description%"
                 },
                 "clangd.enableHover": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Enable hovers provided by the language server"
+                    "description": "%clangd.enableHover.description%"
                 },
                 "clangd.enable": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Enable clangd language server features"
+                    "description": "%clangd.enable.description%"
                 },
                 "clangd.useBuiltInClangdIfAvailable": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Use bundled clangd server if available (linux-x64, linux-arm64, win32-x64), otherwise use the clangd binary specified in clangd.path.",
-                    "deprecationMessage": "Please use clangd.preferBundledClangd instead."
+                    "description": "%clangd.useBuiltInClangdIfAvailable.description%",
+                    "deprecationMessage": "%clangd.useBuiltInClangdIfAvailable.deprecationMessage%"
                 },
                 "clangd.preferBundledClangd": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Use bundled clangd server if available (linux-x64, linux-arm64, win32-x64), otherwise use the clangd binary specified in clangd.path."
+                    "description": "%clangd.preferBundledClangd.description%"
                 },
                 "clangd.headerInsertion": {
                     "type": "string",
                     "default": "iwyu",
-                    "description": "Controls how clangd inserts missing #include directives.",
+                    "description": "%clangd.headerInsertion.description%",
                     "enum": [
                         "iwyu",
                         "never"
                     ],
                     "enumDescriptions": [
-                        "Always include the canonical header, even if it's already transitively included",
-                        "Never insert missing #include directives automatically"
+                        "%clangd.headerInsertion.enumDescriptions.0%",
+                        "%clangd.headerInsertion.enumDescriptions.1%"
                     ]
                 },
                 "clangd.enableClangTidyDiagnostic": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Enable clang-tidy diagnostics"
+                    "description": "%clangd.enableClangTidyDiagnostic.description%"
                 }
             }
         },
         "colors": [
             {
                 "id": "clangd.inactiveRegions.background",
-                "description": "Background color of inactive code regions (used only if clangd.inactiveRegions.useBackgroundHighlight=true)",
+                "description": "%colors.clangd.inactiveRegions.background.description%",
                 "defaults": {
                     "dark": "#1212124C",
                     "light": "#DCDCDC4C",
@@ -265,61 +266,61 @@
             {
                 "command": "clangd.switchheadersource",
                 "category": "Kylin Clangd",
-                "title": "Switch Between Source/Header"
+                "title": "%commands.clangd.switchheadersource.title%"
             },
             {
                 "command": "clangd.install",
                 "category": "Kylin Clangd",
-                "title": "Download language server"
+                "title": "%commands.clangd.install.title%"
             },
             {
                 "command": "clangd.update",
                 "category": "Kylin Clangd",
-                "title": "Check for language server update"
+                "title": "%commands.clangd.update.title%"
             },
             {
                 "command": "clangd.activate",
                 "category": "Kylin Clangd",
-                "title": "Manually activate extension"
+                "title": "%commands.clangd.activate.title%"
             },
             {
                 "command": "clangd.restart",
                 "category": "Kylin Clangd",
-                "title": "Restart language server"
+                "title": "%commands.clangd.restart.title%"
             },
             {
                 "command": "clangd.shutdown",
                 "category": "Kylin Clangd",
-                "title": "Shutdown language server"
+                "title": "%commands.clangd.shutdown.title%"
             },
             {
                 "command": "clangd.typeHierarchy",
                 "category": "Kylin Clangd",
-                "title": "Open Type Hierarchy"
+                "title": "%commands.clangd.typeHierarchy.title%"
             },
             {
                 "command": "clangd.typeHierarchy.viewParents",
                 "category": "Kylin Clangd",
-                "title": "Types: Show Base Classes",
+                "title": "%commands.clangd.typeHierarchy.viewParents.title%",
                 "icon": "$(triangle-up)"
             },
             {
                 "command": "clangd.typeHierarchy.viewChildren",
                 "category": "Kylin Clangd",
-                "title": "Types: Show Derived Classes",
+                "title": "%commands.clangd.typeHierarchy.viewChildren.title%",
                 "icon": "$(triangle-down)"
             },
             {
                 "command": "clangd.typeHierarchy.close",
                 "category": "Kylin Clangd",
                 "enablement": "clangd.typeHierarchyView.visible",
-                "title": "Close type hierarchy view",
+                "title": "%commands.clangd.typeHierarchy.close.title%",
                 "icon": "$(panel-close)"
             },
             {
                 "command": "clangd.memoryUsage",
                 "category": "Kylin Clangd",
-                "title": "Show memory usage",
+                "title": "%commands.clangd.memoryUsage.title%",
                 "enablement": "clangd.memoryUsage.supported",
                 "icon": "$(refresh)"
             },
@@ -327,13 +328,13 @@
                 "command": "clangd.memoryUsage.close",
                 "category": "Kylin Clangd",
                 "enablement": "clangd.memoryUsage.visible",
-                "title": "Close memory usage view",
+                "title": "%commands.clangd.memoryUsage.close.title%",
                 "icon": "$(panel-close)"
             },
             {
                 "command": "clangd.ast",
                 "category": "Kylin Clangd",
-                "title": "Show AST",
+                "title": "%commands.clangd.ast.title%",
                 "enablement": "clangd.ast.supported",
                 "icon": "$(list-tree)"
             },
@@ -341,41 +342,41 @@
                 "command": "clangd.ast.close",
                 "category": "Kylin Clangd",
                 "enablement": "clangd.ast.visible",
-                "title": "Close AST view",
+                "title": "%commands.clangd.ast.close.title%",
                 "icon": "$(panel-close)"
             },
             {
                 "command": "clangd.projectConfig",
                 "category": "Kylin Clangd",
-                "title": "Open project configuration file",
+                "title": "%commands.clangd.projectConfig.title%",
                 "icon": "$(gear)"
             },
             {
                 "command": "clangd.userConfig",
                 "category": "Kylin Clangd",
-                "title": "Open user configuration file",
+                "title": "%commands.clangd.userConfig.title%",
                 "icon": "$(gear)"
             },
             {
                 "command": "clangd.inlayHints.toggle",
                 "category": "Kylin Clangd",
-                "title": "Toggle inlay hints",
+                "title": "%commands.clangd.inlayHints.toggle.title%",
                 "enablement": "clangd.inlayHints.supported"
             },
             {
                 "command": "clangd.showDocumentation",
                 "category": "Kylin Clangd",
-                "title": "Show symbol documentation under cursor"
+                "title": "%commands.clangd.showDocumentation.title%"
             },
             {
                 "command": "clangd.registerDocumentationProvider",
                 "category": "Kylin Clangd",
-                "title": "Register documentation provider"
+                "title": "%commands.clangd.registerDocumentationProvider.title%"
             },
             {
                 "command": "clangd.createClangdConfigFile",
                 "category": "Kylin Clangd",
-                "title": "Create clangd configuration file in workspace folder"
+                "title": "%commands.clangd.createClangdConfigFile.title%"
             }
         ],
         "keybindings": [
@@ -477,17 +478,17 @@
             "explorer": [
                 {
                     "id": "clangd.typeHierarchyView",
-                    "name": "Type Hierarchy",
+                    "name": "%views.explorer.clangd.typeHierarchyView.name%",
                     "when": "clangd.typeHierarchyVisible"
                 },
                 {
                     "id": "clangd.memoryUsage",
-                    "name": "clangd Memory Usage",
+                    "name": "%views.explorer.clangd.memoryUsage.name%",
                     "when": "clangd.memoryUsage.hasData"
                 },
                 {
                     "id": "clangd.ast",
-                    "name": "AST",
+                    "name": "%views.explorer.clangd.ast.name%",
                     "when": "clangd.ast.hasData"
                 }
             ]

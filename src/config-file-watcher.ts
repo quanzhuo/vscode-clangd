@@ -33,19 +33,23 @@ async function createClangdConfigFile(context: ClangdContext) {
           [
             new ClangdConfigFilePickItem(
                 '.clangd',
-                '.clangd is used to configure clangd and requires clangd version 11 or later.',
+                vscode.l10n.t(
+                    '.clangd is used to configure clangd features (completion, diagnostics, etc.), requires clangd version 11 or later.'),
                 true),
             new ClangdConfigFilePickItem(
                 '.clang-tidy',
-                '.clang-tidy is used to configure clang-tidy diagnostics',
+                vscode.l10n.t(
+                    '.clang-tidy is used to configure clang-tidy checks and diagnostics.'),
                 true),
             new ClangdConfigFilePickItem(
                 '.clang-format',
-                '.clang-format is used to configure clangd\'s code formatting style',
+                vscode.l10n.t(
+                    '.clang-format is used to configure code formatting style.'),
                 true),
           ],
           {
-            title: 'Select configure files to create in the workspace folder',
+            title: vscode.l10n.t(
+                'Select configure files to create in the workspace folder'),
             canPickMany: true,
             ignoreFocusOut: true,
           })
@@ -151,19 +155,23 @@ class ConfigFileWatcher implements vscode.Disposable {
       break;
     case 'prompt':
     default:
+      const yes = vscode.l10n.t('Yes');
+      const yesAlways = vscode.l10n.t('Yes, always');
+      const noNever = vscode.l10n.t('No, never');
       switch (await vscode.window.showInformationMessage(
-          `Clangd configuration file at '${
-              uri.fsPath}' has been changed. Do you want to restart it?`,
-          'Yes', 'Yes, always', 'No, never')) {
-      case 'Yes':
+          vscode.l10n.t(
+              `Clangd configuration file at {0} has been changed. Do you want to restart it?`,
+              uri.fsPath),
+          yes, yesAlways, noNever)) {
+      case yes:
         vscode.commands.executeCommand('clangd.restart');
         break;
-      case 'Yes, always':
+      case yesAlways:
         vscode.commands.executeCommand('clangd.restart');
         config.update<string>('onConfigChanged', 'restart',
                               vscode.ConfigurationTarget.Global);
         break;
-      case 'No, never':
+      case noNever:
         config.update<string>('onConfigChanged', 'ignore',
                               vscode.ConfigurationTarget.Global);
         break;

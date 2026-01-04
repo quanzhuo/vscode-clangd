@@ -77,7 +77,7 @@ async function replacement(name: string): Promise<string|undefined> {
     } catch (error) {
       console.warn(`Clangd: Error resolving command '${commandId}':`, error);
       vscode.window.showWarningMessage(
-          `Clangd: Failed to resolve ${commandId}`);
+          vscode.l10n.t('Clangd: Failed to resolve {0}', commandId));
 
       return undefined;
     }
