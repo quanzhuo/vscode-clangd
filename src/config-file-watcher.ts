@@ -37,15 +37,15 @@ async function createClangdConfigFile(context: ClangdContext) {
                     '.clangd is used to configure clangd features (completion, diagnostics, etc.), requires clangd version 11 or later.'),
                 true),
             new ClangdConfigFilePickItem(
-                '.clang-tidy',
-                vscode.l10n.t(
-                    '.clang-tidy is used to configure clang-tidy checks and diagnostics.'),
-                true),
-            new ClangdConfigFilePickItem(
                 '.clang-format',
                 vscode.l10n.t(
                     '.clang-format is used to configure code formatting style.'),
                 true),
+            new ClangdConfigFilePickItem(
+                '.clang-tidy',
+                vscode.l10n.t(
+                    '.clang-tidy is used to configure clang-tidy checks and diagnostics.'),
+                false),
           ],
           {
             title: vscode.l10n.t(

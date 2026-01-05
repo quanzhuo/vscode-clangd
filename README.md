@@ -27,8 +27,7 @@ This extension comes with a bundled and modified `clangd` language server, so yo
 
 ### Configuration Management
 - **Quick Config Creation**: Easily create `.clangd`, `.clang-tidy`, and `.clang-format` files in your workspace.
-- **YAML Support**: Added support for YAML format(completion, validation) in clangd configuration files.
-- **Auto-Restart**: The server automatically restarts when configuration files are changed.
+- **YAML Support**: Provides auto-completion, validation, and formatting for clangd configuration files (.clangd, .clang-tidy, .clang-format).
 - **New Settings**:
     - `headerInsertion`: Control header insertion behavior.
     - `enableClangTidyDiagnostic`: Toggle Clang-Tidy diagnostics.

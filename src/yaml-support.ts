@@ -4,12 +4,15 @@ import * as vscode from 'vscode';
 import {
   TextDocument as LSTextDocument
 } from 'vscode-languageserver-textdocument';
-import {MarkupContent} from 'vscode-languageserver-types';
+import {InsertTextFormat, MarkupContent} from 'vscode-languageserver-types';
 import {getLanguageService} from 'yaml-language-server';
 
 // Define the file patterns we want to support
 const SUPPORTED_FILES = [
-  {pattern: '**/.clangd', schemaUri: 'internal://schemas/clangd.json'},
+  {pattern: '**/.clangd', schemaUri: 'internal://schemas/clangd.json'}, {
+    pattern: '**/clangd/config.yaml',
+    schemaUri: 'internal://schemas/clangd.json'
+  },
   {pattern: '**/.clang-tidy', schemaUri: 'internal://schemas/clang-tidy.json'},
   {
     pattern: '**/.clang-format',
@@ -69,8 +72,13 @@ export function activateYamlSupport(context: vscode.ExtensionContext) {
   const schemas = SUPPORTED_FILES.map(
       item => ({uri: item.schemaUri, fileMatch: [item.pattern]}));
 
-  yamlService.configure(
-      {schemas: schemas, validate: true, hover: true, completion: true});
+  yamlService.configure({
+    schemas: schemas,
+    validate: true,
+    hover: true,
+    completion: true,
+    format: true
+  });
 
   // 3. Register Providers
   // Use language selector 'yaml' for these files as we registered them in
@@ -80,6 +88,7 @@ export function activateYamlSupport(context: vscode.ExtensionContext) {
     {language: 'yaml', pattern: '**/.clangd'},
     {language: 'yaml', pattern: '**/.clang-tidy'},
     {language: 'yaml', pattern: '**/.clang-format'},
+    {language: 'yaml', pattern: '**/clangd/config.yaml'},
     // Fallback patterns
     {pattern: '**/.clangd'}, {pattern: '**/.clang-tidy'},
     {pattern: '**/.clang-format'}
@@ -133,8 +142,13 @@ export function activateYamlSupport(context: vscode.ExtensionContext) {
                   }
                 }
                 vscodeItem.detail = item.detail;
-                vscodeItem.kind = item.kind as any; // Map kinds if necessary
-                vscodeItem.insertText = item.insertText;
+                vscodeItem.kind = item.kind; // Map kinds if necessary
+                if (item.insertTextFormat === InsertTextFormat.Snippet) {
+                  vscodeItem.insertText =
+                      new vscode.SnippetString(item.insertText);
+                } else {
+                  vscodeItem.insertText = item.insertText;
+                }
                 // Handle edits, snippets etc.
                 return vscodeItem;
               });
@@ -181,6 +195,24 @@ export function activateYamlSupport(context: vscode.ExtensionContext) {
       return new vscode.Hover(contents, range);
     }
   }));
+
+  // Formatting Provider
+  context.subscriptions.push(
+      vscode.languages.registerDocumentFormattingEditProvider(selector, {
+        provideDocumentFormattingEdits: async (document, options) => {
+          const lsDoc = getLSDocument(document);
+          const edits = await yamlService.doFormat(
+              lsDoc,
+              {tabSize: options.tabSize, insertSpaces: options.insertSpaces} as
+                  any);
+
+          return edits.map(
+              e => new vscode.TextEdit(
+                  new vscode.Range(e.range.start.line, e.range.start.character,
+                                   e.range.end.line, e.range.end.character),
+                  e.newText));
+        }
+      }));
 
   // Validation (Diagnostics)
   const diagnosticCollection =
