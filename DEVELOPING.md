@@ -7,6 +7,18 @@ A guide of developing `vscode-clangd` extension.
 * VS Code
 * node.js and npm
 
+## Building And Running (Webview for .clangd editor)
+
+The extension includes a Vue3-based webview for editing `.clangd` files. It resides in `src/webview`.
+To build it:
+
+```bash
+npm run build:webview
+```
+
+This must be run before `npm run compile` or launching the extension if you made changes to the webview code.
+The build output goes to `out/webview`.
+
 ## Building and running (command line)
 
 ```bash

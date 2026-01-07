@@ -4,6 +4,7 @@ import {ClangdExtension} from '../api/vscode-clangd';
 
 import {ClangdExtensionImpl} from './api';
 import {ClangdContext} from './clangd-context';
+import {ClangdConfigEditorProvider} from './clangd-config-editor';
 import {get, update} from './config';
 import {activateYamlSupport} from './yaml-support';
 
@@ -25,6 +26,8 @@ export async function activate(context: vscode.ExtensionContext):
   extContext = context;
   const outputChannel = vscode.window.createOutputChannel('Kylin Clangd');
   context.subscriptions.push(outputChannel);
+
+  context.subscriptions.push(ClangdConfigEditorProvider.register(context));
 
   let clangdContext: ClangdContext|null = null;
 

@@ -53,7 +53,8 @@
         "publish-pre-release": "vsce publish --pre-release --baseImagesUrl https://raw.githubusercontent.com/clangd/vscode-clangd/master/",
         "publish-openvsx-pre-release": "ovsx publish --pre-release --baseImagesUrl https://raw.githubusercontent.com/clangd/vscode-clangd/master/",
         "postinstall": "patch-package",
-        "git-clang-format": "git-clang-format --extensions=ts"
+        "git-clang-format": "git-clang-format --extensions=ts",
+        "build:webview": "cd src/webview && npm install && npm run build"
     },
     "dependencies": {
         "@clangd/install": "0.1.20",
@@ -93,6 +94,18 @@
         }
     },
     "contributes": {
+        "customEditors": [
+            {
+                "viewType": "clangd.configEditor",
+                "displayName": "Clangd Config Editor",
+                "selector": [
+                    {
+                        "filenamePattern": ".clangd"
+                    }
+                ],
+                "priority": "default"
+            }
+        ],
         "languages": [
             {
                 "id": "yaml",
