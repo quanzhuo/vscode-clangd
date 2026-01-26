@@ -2,9 +2,14 @@
 
 Improvements:
 
-* Bundled the latest clangd language server 22.0 (linux-x64, linux-arm64, win32-x64)
-* No longer depends on redhat.vscode-yaml extension
+* Bundled the latest clangd language server 23.0 (linux-x64, linux-arm64, win32-x64)
+* No longer depends on redhat.vscode-yaml
 * Renamed `clangd.useBuiltInClangdIfAvailable` to `clangd.preferBundledClangd`
+* Add tweak 'Generate definition'
+
+Bug Fixes:
+
+* Fix clangd issue [2502](https://github.com/clangd/clangd/issues/2502)、[2573](https://github.com/clangd/clangd/issues/2573)
 
 ## v0.4.0
 
