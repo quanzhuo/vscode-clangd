@@ -114,6 +114,10 @@ export class ClangdContext implements vscode.Disposable {
         clangdFileStatus: true,
         fallbackFlags: await config.get<string[]>('fallbackFlags')
       },
+      synchronize: {
+        fileEvents: vscode.workspace.createFileSystemWatcher(
+            '**/{.clangd,.clang-tidy,compile_flags.txt}')
+      },
       outputChannel: outputChannel,
       // Do not switch to output window when clangd returns output.
       revealOutputChannelOn: vscodelc.RevealOutputChannelOn.Never,
