@@ -56,7 +56,8 @@ export function activate(context: ClangdContext) {
           const folder = vscode.workspace.workspaceFolders[0];
           openConfigFile(vscode.Uri.joinPath(folder.uri, '.clangd'))
         } else {
-          vscode.window.showErrorMessage(vscode.l10n.t('No project is open'));
+          vscode.window.showErrorMessage(
+              vscode.l10n.t('openConfig.noProjectOpen'));
         }
       }));
 
@@ -67,7 +68,7 @@ export function activate(context: ClangdContext) {
           openConfigFile(vscode.Uri.file(file));
         } else {
           vscode.window.showErrorMessage(
-              vscode.l10n.t('Couldn\'t get global configuration directory'));
+              vscode.l10n.t('openConfig.couldNotGetGlobalConfigDir'));
         }
       }));
 }

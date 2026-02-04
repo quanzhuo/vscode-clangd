@@ -152,7 +152,7 @@ async function showDocumentation(context: ClangdContext) {
     const extension = vscode.extensions.getExtension(provider.extensionId);
     if (!extension) {
       vscode.window.showErrorMessage(
-          vscode.l10n.t('Extension {0} not found', provider.extensionId));
+          vscode.l10n.t('symbolInfo.extensionNotFound', provider.extensionId));
       return;
     }
     vscode.commands.executeCommand(provider.command, details);

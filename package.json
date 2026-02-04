@@ -233,6 +233,31 @@
                     "default": true,
                     "description": "%clangd.preferBundledClangd.description%"
                 },
+                "clangd.formatting.preferBundledClangFormat": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%clangd.formatting.preferBundledClangFormat.description%"
+                },
+                "clangd.formatting.clangFormatPath": {
+                    "type": "string",
+                    "default": "clang-format",
+                    "description": "%clangd.formatting.clangFormatPath.description%"
+                },
+                "clangd.formatting.includePattern": {
+                    "type": "string",
+                    "default": "**/*.{c,cpp,h,hpp,cc,cxx,m,mm,cu,inc}",
+                    "description": "%clangd.formatting.includePattern.description%"
+                },
+                "clangd.formatting.excludePattern": {
+                    "type": "string",
+                    "default": "**/build/**,**/out/**,**/cmake-build-*/**",
+                    "description": "%clangd.formatting.excludePattern.description%"
+                },
+                "clangd.formatting.concurrency": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "%clangd.formatting.concurrency.description%"
+                },
                 "clangd.headerInsertion": {
                     "type": "string",
                     "default": "iwyu",
@@ -294,6 +319,11 @@
                 "command": "clangd.shutdown",
                 "category": "Kylin Clangd",
                 "title": "%commands.clangd.shutdown.title%"
+            },
+            {
+                "command": "clangd.formatWorkspace",
+                "category": "Kylin Clangd",
+                "title": "%commands.clangd.formatWorkspace.title%"
             },
             {
                 "command": "clangd.typeHierarchy",

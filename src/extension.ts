@@ -5,6 +5,7 @@ import {ClangdExtension} from '../api/vscode-clangd';
 import {ClangdExtensionImpl} from './api';
 import {ClangdContext} from './clangd-context';
 import {get, update} from './config';
+import {formatWorkspace} from './formatting';
 import {activateYamlSupport} from './yaml-support';
 
 let apiInstance: ClangdExtensionImpl|undefined;
@@ -39,13 +40,11 @@ export async function activate(context: vscode.ExtensionContext):
   context.subscriptions.push(
       vscode.commands.registerCommand('clangd.restart', async () => {
         if (!get<boolean>('enable')) {
-          const enable = vscode.l10n.t('Enable');
-          const close = vscode.l10n.t('Close');
+          const enable = vscode.l10n.t('clangd.enable');
+          const close = vscode.l10n.t('clangd.close');
           vscode.window
-              .showInformationMessage(
-                  vscode.l10n.t(
-                      'Language features from Clangd are currently disabled. Would you like to enable them?'),
-                  enable, close)
+              .showInformationMessage(vscode.l10n.t('clangd.disabled'), enable,
+                                      close)
               .then(async (choice) => {
                 if (choice === enable) {
                   await update<boolean>('enable', true);
@@ -82,6 +81,8 @@ export async function activate(context: vscode.ExtensionContext):
         if (clangdContext)
           clangdContext.dispose();
       }));
+  context.subscriptions.push(vscode.commands.registerCommand(
+      'clangd.formatWorkspace', () => formatWorkspace(context)));
 
   let shouldCheck = false;
 
@@ -105,15 +106,12 @@ export async function activate(context: vscode.ExtensionContext):
         const cppToolsEnabled =
             cppToolsConfiguration.get<string>('intelliSenseEngine');
         if (cppToolsEnabled?.toLowerCase() !== 'disabled') {
-          const disableIntelliSense = vscode.l10n.t('Disable IntelliSense');
-          const neverShow = vscode.l10n.t('Never show this warning');
+          const disableIntelliSense =
+              vscode.l10n.t('clangd.disableIntelliSense');
+          const neverShow = vscode.l10n.t('clangd.neverShow');
           vscode.window
-              .showWarningMessage(
-                  vscode.l10n.t(
-                      'You have both the Microsoft C++ (cpptools) extension and ' +
-                      'clangd extension enabled. The Microsoft IntelliSense features ' +
-                      'conflict with clangd\'s code completion, diagnostics etc.'),
-                  disableIntelliSense, neverShow)
+              .showWarningMessage(vscode.l10n.t('clangd.conflict'),
+                                  disableIntelliSense, neverShow)
               .then(selection => {
                 if (selection == disableIntelliSense) {
                   cppToolsConfiguration.update(

@@ -4,3 +4,5 @@ node_modules
 *.vsix
 clangd*.tgz
 res/clangd
+res/clang-format
+res/clang-format.exe

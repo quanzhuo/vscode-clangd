@@ -52,7 +52,7 @@ class ASTFeature implements vscodelc.StaticFeature {
                   });
               if (!item)
                 vscode.window.showInformationMessage(
-                    vscode.l10n.t('No AST node at selection'));
+                    vscode.l10n.t('ast.noNode'));
               adapter.setRoot(item ?? undefined, editor.document.uri);
             }),
         // Clicking "close" will empty the adapter, which in turn hides the

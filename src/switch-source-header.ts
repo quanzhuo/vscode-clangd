@@ -26,7 +26,7 @@ async function switchSourceHeader(client: vscodelc.LanguageClient):
       await client.sendRequest(SwitchSourceHeaderRequest.type, docIdentifier);
   if (!sourceUri) {
     vscode.window.showInformationMessage(
-        vscode.l10n.t('Didn\'t find a corresponding file.'));
+        vscode.l10n.t('switchSourceHeader.notFound'));
     return;
   }
   const doc =

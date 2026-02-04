@@ -82,9 +82,9 @@ class UI {
   }
 
   async shouldReuse(release: string): Promise<boolean|undefined> {
-    const message = vscode.l10n.t('clangd {0} is already installed!', release);
-    const use = vscode.l10n.t('Use the installed version');
-    const reinstall = vscode.l10n.t('Delete it and reinstall');
+    const message = vscode.l10n.t('install.clangd.alreadyInstalled', release);
+    const use = vscode.l10n.t('install.clangd.use');
+    const reinstall = vscode.l10n.t('install.clangd.reinstall');
     const response =
         await vscode.window.showInformationMessage(message, use, reinstall);
     if (response === use) {
@@ -110,16 +110,15 @@ class UI {
 
   async showHelp(message: string, url: string) {
     if (await vscode.window.showInformationMessage(
-            message, vscode.l10n.t('Open website')))
+            message, vscode.l10n.t('install.openWebsite')))
       vscode.env.openExternal(vscode.Uri.parse(url));
   }
 
   async promptUpdate(oldVersion: string, newVersion: string) {
-    const message = vscode.l10n.t(
-        'An updated clangd language server is available.\n Would you like to upgrade to clangd {0}? (from {1})',
-        newVersion, oldVersion);
-    const update = vscode.l10n.t('Install clangd {0}', newVersion);
-    const dontCheck = vscode.l10n.t('Don\'t ask again');
+    const message =
+        vscode.l10n.t('install.updateAvailablePrompt', newVersion, oldVersion);
+    const update = vscode.l10n.t('install.clangd.install', newVersion);
+    const dontCheck = vscode.l10n.t('install.dontAskAgain');
     const response =
         await vscode.window.showInformationMessage(message, update, dontCheck);
     if (response === update) {
@@ -134,17 +133,13 @@ class UI {
     let message = '';
     if (p.indexOf(path.sep) < 0) {
       message +=
-          vscode.l10n.t(
-              'The \'{0}\' language server was not found on your PATH.', p) +
-          '\n';
+          vscode.l10n.t('install.languageServerNotFoundOnPath', p) + '\n';
     } else {
-      message +=
-          vscode.l10n.t('The clangd binary \'{0}\' was not found.', p) + '\n';
+      message += vscode.l10n.t('install.clangdBinaryNotFound', p) + '\n';
     }
-    message += vscode.l10n.t(
-        'Would you like to download and install clangd {0}?', version);
-    if (await vscode.window.showInformationMessage(message,
-                                                   vscode.l10n.t('Install')))
+    message += vscode.l10n.t('install.promptInstall', version);
+    if (await vscode.window.showInformationMessage(
+            message, vscode.l10n.t('dialog.install')))
       common.installLatest(this);
   }
 
@@ -197,7 +192,7 @@ class UI {
 
     // Extract the tarball to the global storage path.
     const extractPath = path.join(extensionPath, 'res');
-    await this.slow(vscode.l10n.t('Extracting bundled clangd...'), tar.x({
+    await this.slow(vscode.l10n.t('install.extractingBundledClangd'), tar.x({
       file: tgzPath,
       cwd: extractPath,
       gzip: true,

@@ -32,24 +32,16 @@ async function createClangdConfigFile(context: ClangdContext) {
       .showQuickPick(
           [
             new ClangdConfigFilePickItem(
-                '.clangd',
-                vscode.l10n.t(
-                    '.clangd is used to configure clangd features (completion, diagnostics, etc.), requires clangd version 11 or later.'),
-                true),
+                '.clangd', vscode.l10n.t('configFiles.clangd.detail'), true),
             new ClangdConfigFilePickItem(
                 '.clang-format',
-                vscode.l10n.t(
-                    '.clang-format is used to configure code formatting style.'),
-                true),
+                vscode.l10n.t('configFiles.clangFormat.detail'), true),
             new ClangdConfigFilePickItem(
-                '.clang-tidy',
-                vscode.l10n.t(
-                    '.clang-tidy is used to configure clang-tidy checks and diagnostics.'),
+                '.clang-tidy', vscode.l10n.t('configFiles.clangTidy.detail'),
                 false),
           ],
           {
-            title: vscode.l10n.t(
-                'Select configure files to create in the workspace folder'),
+            title: vscode.l10n.t('configFiles.selectTitle'),
             canPickMany: true,
             ignoreFocusOut: true,
           })
@@ -155,13 +147,11 @@ class ConfigFileWatcher implements vscode.Disposable {
       break;
     case 'prompt':
     default:
-      const yes = vscode.l10n.t('Yes');
-      const yesAlways = vscode.l10n.t('Yes, always');
-      const noNever = vscode.l10n.t('No, never');
+      const yes = vscode.l10n.t('dialog.yes');
+      const yesAlways = vscode.l10n.t('dialog.yesAlways');
+      const noNever = vscode.l10n.t('dialog.noNever');
       switch (await vscode.window.showInformationMessage(
-          vscode.l10n.t(
-              `Clangd configuration file at {0} has been changed. Do you want to restart it?`,
-              uri.fsPath),
+          vscode.l10n.t('configWatcher.configFileChangedPrompt', uri.fsPath),
           yes, yesAlways, noNever)) {
       case yes:
         vscode.commands.executeCommand('clangd.restart');
