@@ -38,6 +38,10 @@
     "install.updateAvailablePrompt": "有可用的 clangd 语言服务器更新。\n 您想升级到 clangd {0} 吗？（从 {1}）",
     "openConfig.couldNotGetGlobalConfigDir": "无法获取全局配置目录",
     "openConfig.noProjectOpen": "未打开任何项目。",
+    "overrideMethods.failed": "重载方法失败：{0}",
+    "overrideMethods.noMethods": "当前位置没有可重载的方法。",
+    "overrideMethods.quickPickPlaceholder": "选择要在 {0} 中重载的方法",
+    "overrideMethods.updateRequired": "重载方法功能需要更新版本的 clangd。请更新你的 clangd 可执行文件。",
     "switchSourceHeader.notFound": "未找到对应的文件。",
     "symbolInfo.extensionNotFound": "未找到扩展 {0}。",
     "typeHierarchy.noneAvailable": "所选位置没有类型层次结构"

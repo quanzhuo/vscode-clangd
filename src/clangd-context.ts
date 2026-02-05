@@ -12,6 +12,7 @@ import * as inlayHints from './inlay-hints';
 import * as install from './install';
 import * as memoryUsage from './memory-usage';
 import * as openConfig from './open-config';
+import * as overrideMethods from './override-methods';
 import {QMakeTools} from './qmakeToolsApi';
 import * as switchSourceHeader from './switch-source-header';
 import * as symbolInfo from './symbol-info';
@@ -272,6 +273,7 @@ export class ClangdContext implements vscode.Disposable {
     openConfig.activate(this);
     inactiveRegions.activate(this);
     await configFileWatcher.activate(this);
+    await overrideMethods.activate(this);
     this.client.start();
     console.log('Clang Language Server is now active!');
     fileStatus.activate(this);

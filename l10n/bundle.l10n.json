@@ -38,6 +38,10 @@
     "install.updateAvailablePrompt": "An updated clangd language server is available.\n Would you like to upgrade to clangd {0}? (from {1})",
     "openConfig.couldNotGetGlobalConfigDir": "Couldn't get global configuration directory",
     "openConfig.noProjectOpen": "No project is open.",
+    "overrideMethods.failed": "Failed to override methods: {0}",
+    "overrideMethods.noMethods": "No overridable methods available at this position.",
+    "overrideMethods.quickPickPlaceholder": "Select methods to override in {0}",
+    "overrideMethods.updateRequired": "Override methods feature requires a newer version of clangd. Please update your clangd executable.",
     "switchSourceHeader.notFound": "Didn't find a corresponding file.",
     "symbolInfo.extensionNotFound": "Extension {0} not found.",
     "typeHierarchy.noneAvailable": "No type hierarchy available for selection"
