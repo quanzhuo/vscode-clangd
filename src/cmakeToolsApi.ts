@@ -14,7 +14,10 @@ export enum Version {
   v1 = 1, // 1.x.x
   v2 = 2, // 2.x.x
   v3 = 3, // 3.x.x
-  latest = v3,
+  v4 = 4, // 4.x.x
+  v5 = 5, // 5.x.x
+  v1000 = 1000, // Kylin fork compile-command API, based on the current v5 surface
+  latest = v5,
 }
 
 /**
@@ -143,6 +146,31 @@ export interface Project {
    * Gets the type of build for the currently selected configuration.
    */
   getActiveBuildType(): Promise<string|undefined>;
+
+  readonly onCompileCommandsChanged:
+      vscode.Event<CompileCommandsChangeEvent>;
+
+  getCompileCommand(file: vscode.Uri):
+      Promise<ResolvedCompileCommand|undefined>;
+
+  getTranslationUnitCompileCommands(): Promise<ResolvedCompileCommand[]>;
+}
+
+export interface CompileCommandsChangeEvent {
+  kind: 'full'|'files';
+  files?: vscode.Uri[];
+}
+
+export interface ResolvedCompileCommand {
+  uri: vscode.Uri;
+  sourceUri: vscode.Uri;
+  workingDirectory: string;
+  compilationCommand: string[];
+  compilerPath?: string;
+  targetName?: string;
+  configurationName?: string;
+  language?: string;
+  inferred: boolean;
 }
 
 export namespace CodeModel {
@@ -311,3 +339,4 @@ export async function getCMakeToolsApi(desiredVersion: Version,
 
   return api;
 }
+

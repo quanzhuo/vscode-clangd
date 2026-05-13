@@ -24,7 +24,22 @@ export class CMakeTools implements vscode.Disposable {
   get cmakeProject(): Project|undefined { return this._cmakeProject; }
 
   async init() {
-    this._cmakeToolsApi = await getCMakeToolsApi(Version.v1);
+    this._cmakeToolsApi = await getCMakeToolsApi(Version.v1000, true);
+    if (this._cmakeToolsApi) {
+      this._workspaceFolder = this._cmakeToolsApi.getActiveFolderPath();
+      this._cmakeProject = await this._cmakeToolsApi.getProject(
+          vscode.Uri.file(this._workspaceFolder));
+      if (this._cmakeProject) {
+        this._buildDirectory = await this._cmakeProject.getBuildDirectory();
+        this._disposables.push(
+            this._cmakeProject.onCodeModelChanged(
+                this.onCodeModelChanged.bind(this)),
+        );
+        return;
+      }
+    }
+
+    this._cmakeToolsApi = await getCMakeToolsApi(Version.v5);
     if (!this._cmakeToolsApi) {
       return;
     }
@@ -46,6 +61,13 @@ export class CMakeTools implements vscode.Disposable {
             this.onCodeModelChanged.bind(this)),
         // this._cmakeProject.onSelectedConfigurationChanged(this.onSelectedConfigurationChanged.bind(this)),
     );
+  }
+
+  async getProject(uri: vscode.Uri): Promise<Project|undefined> {
+    if (this._cmakeToolsApi) {
+      return this._cmakeToolsApi.getProject(uri);
+    }
+    return undefined;
   }
 
   private async onCodeModelChanged() {

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/node';
 
 import * as ast from './ast';
+import {CMakeCompileCommands} from './cmakeCompileCommands';
 import {CMakeTools} from './cmakeTools';
 import * as config from './config';
 import * as configFileWatcher from './config-file-watcher';
@@ -274,7 +275,10 @@ export class ClangdContext implements vscode.Disposable {
     inactiveRegions.activate(this);
     await configFileWatcher.activate(this);
     await overrideMethods.activate(this);
-    this.client.start();
+    await this.client.start();
+    const cmakeCompileCommands = new CMakeCompileCommands(this.client);
+    this.subscriptions.push(cmakeCompileCommands);
+    void cmakeCompileCommands.activate();
     console.log('Clang Language Server is now active!');
     fileStatus.activate(this);
     switchSourceHeader.activate(this);
