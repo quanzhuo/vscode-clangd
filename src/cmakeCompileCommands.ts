@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/node';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 import {CMakeTools} from './cmakeTools';
 import {
@@ -16,6 +18,8 @@ const clangdLanguages = new Set([
   'objective-cpp',
 ]);
 
+const fullSyncBatchSize = 200;
+
 function isClangdDocument(document: vscode.TextDocument): boolean {
   return clangdLanguages.has(document.languageId);
 }
@@ -25,6 +29,9 @@ export class CMakeCompileCommands implements vscode.Disposable {
   private readonly cmakeTools = new CMakeTools();
   private activeProjectDisposables: vscode.Disposable[] = [];
   private activeProject: Project|undefined;
+  private readonly diskCdbProjects = new WeakSet<Project>();
+  private readonly fullSyncProjects = new WeakSet<Project>();
+  private readonly fullSyncTasks = new WeakMap<Project, Promise<void>>();
   private ready = false;
 
   constructor(private readonly client: vscodelc.LanguageClient) {}
@@ -88,6 +95,7 @@ export class CMakeCompileCommands implements vscode.Disposable {
         this.onCompileCommandsChanged.bind(this)));
     await Promise.all(vscode.workspace.textDocuments.map(
         (document) => this.pushCompileCommandForDocument(document)));
+    void this.maybePushInitialTranslationUnitCommands(project);
   }
 
   private async onCompileCommandsChanged(
@@ -95,6 +103,9 @@ export class CMakeCompileCommands implements vscode.Disposable {
     if (event.kind === 'full') {
       await Promise.all(vscode.workspace.textDocuments.map(
           (document) => this.pushCompileCommandForDocument(document)));
+      if (this.activeProject) {
+        void this.maybePushInitialTranslationUnitCommands(this.activeProject);
+      }
       return;
     }
 
@@ -134,7 +145,79 @@ export class CMakeCompileCommands implements vscode.Disposable {
     this.sendCompileCommands([command]);
   }
 
-  private sendCompileCommands(commands: ResolvedCompileCommand[]): void {
+  private async maybePushInitialTranslationUnitCommands(project: Project):
+      Promise<void> {
+    if (!project.getTranslationUnitCompileCommands ||
+        this.diskCdbProjects.has(project) ||
+        this.fullSyncProjects.has(project)) {
+      return;
+    }
+
+    if (await this.hasOnDiskCompilationDatabase(project)) {
+      this.diskCdbProjects.add(project);
+      this.fullSyncProjects.add(project);
+      return;
+    }
+
+    const existingTask = this.fullSyncTasks.get(project);
+    if (existingTask) {
+      await existingTask;
+      return;
+    }
+
+    const task = this.pushInitialTranslationUnitCommands(project);
+    this.fullSyncTasks.set(project, task);
+
+    try {
+      await task;
+    } finally {
+      this.fullSyncTasks.delete(project);
+    }
+  }
+
+  private async pushInitialTranslationUnitCommands(project: Project):
+      Promise<void> {
+    const commands = await project.getTranslationUnitCompileCommands?.();
+    if (!commands || commands.length === 0) {
+      return;
+    }
+
+    this.sendCompileCommands(commands, fullSyncBatchSize);
+    this.fullSyncProjects.add(project);
+  }
+
+  private async hasOnDiskCompilationDatabase(project: Project):
+      Promise<boolean> {
+    const buildDirectory = await project.getBuildDirectory();
+    if (!buildDirectory) {
+      return false;
+    }
+
+    try {
+      await fs.access(path.join(buildDirectory, 'compile_commands.json'));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private sendCompileCommands(commands: ResolvedCompileCommand[],
+                              batchSize?: number): void {
+    if (!this.ready || commands.length === 0) {
+      return;
+    }
+
+    if (!batchSize || batchSize <= 0 || commands.length <= batchSize) {
+      this.sendCompileCommandsBatch(commands);
+      return;
+    }
+
+    for (let index = 0; index < commands.length; index += batchSize) {
+      this.sendCompileCommandsBatch(commands.slice(index, index + batchSize));
+    }
+  }
+
+  private sendCompileCommandsBatch(commands: ResolvedCompileCommand[]): void {
     if (!this.ready || commands.length === 0) {
       return;
     }
