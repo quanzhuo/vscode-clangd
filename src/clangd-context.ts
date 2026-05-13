@@ -213,8 +213,9 @@ export class ClangdContext implements vscode.Disposable {
       },
     };
 
-    // Prefer seeding clangd's in-memory CDB during initialize so restart/open
-    // races do not fall back before dynamic updates arrive.
+    // Seed open-document compile commands during initialize.
+    // CMakeCompileCommands activates only after client.start(), so it cannot
+    // prevent the first didOpen from falling back when no on-disk CDB exists.
     await ClangdContext.setCompilationDatabaseOptions(clientOptions);
 
     const client =

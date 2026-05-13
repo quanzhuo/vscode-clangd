@@ -24,6 +24,7 @@ export class CMakeCompileCommands implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private readonly cmakeTools = new CMakeTools();
   private activeProjectDisposables: vscode.Disposable[] = [];
+  private activeProject: Project|undefined;
   private ready = false;
 
   constructor(private readonly client: vscodelc.LanguageClient) {}
@@ -43,6 +44,8 @@ export class CMakeCompileCommands implements vscode.Disposable {
       return;
     }
 
+    // This keeps clangd in sync after startup. Initial open documents still
+    // need initialize-time seeding because the client is already running here.
     this.ready = true;
 
     this.disposables.push(api.onActiveProjectChanged(
@@ -75,21 +78,23 @@ export class CMakeCompileCommands implements vscode.Disposable {
   private async bindProject(project: Project|undefined): Promise<void> {
     this.activeProjectDisposables.forEach((disposable) => disposable.dispose());
     this.activeProjectDisposables = [];
+    this.activeProject = project;
 
-    if (!project || !project.onCompileCommandsChanged ||
-        !project.getTranslationUnitCompileCommands) {
+    if (!project || !project.onCompileCommandsChanged) {
       return;
     }
 
     this.activeProjectDisposables.push(project.onCompileCommandsChanged(
         this.onCompileCommandsChanged.bind(this)));
-    await this.pushTranslationUnitCompileCommands(project);
+    await Promise.all(vscode.workspace.textDocuments.map(
+        (document) => this.pushCompileCommandForDocument(document)));
   }
 
   private async onCompileCommandsChanged(
       event: CompileCommandsChangeEvent): Promise<void> {
     if (event.kind === 'full') {
-      await vscode.commands.executeCommand('clangd.restart');
+      await Promise.all(vscode.workspace.textDocuments.map(
+          (document) => this.pushCompileCommandForDocument(document)));
       return;
     }
 
@@ -108,20 +113,6 @@ export class CMakeCompileCommands implements vscode.Disposable {
         this.sendCompileCommands([command]);
       }
     }));
-  }
-
-  private async pushTranslationUnitCompileCommands(project: Project):
-      Promise<void> {
-    if (!project.getTranslationUnitCompileCommands) {
-      return;
-    }
-
-    const commands = await project.getTranslationUnitCompileCommands();
-    if (commands.length === 0) {
-      return;
-    }
-
-    this.sendCompileCommands(commands);
   }
 
   private async pushCompileCommandForDocument(document: vscode.TextDocument):
