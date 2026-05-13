@@ -241,6 +241,9 @@ export class ClangdContext implements vscode.Disposable {
         const commands =
             await ClangdContext.getOpenDocumentCompileCommands(cmakeTools);
         if (commands.length > 0) {
+          // clangd overlays per-file commands on top of the directory-based
+          // CDB, so explicit changes win and compilationDatabasePath still
+          // serves as a fallback for files we have not pushed yet.
           clientOptions.initializationOptions.compilationDatabaseChanges =
               Object.fromEntries(commands.map((command) => [
                 command.uri.fsPath,
@@ -250,6 +253,11 @@ export class ClangdContext implements vscode.Disposable {
                 }
               ]));
         }
+      }
+
+      if (cmakeTools.buildDirectory) {
+        clientOptions.initializationOptions.compilationDatabasePath =
+            cmakeTools.buildDirectory;
         return;
       }
     } finally {
