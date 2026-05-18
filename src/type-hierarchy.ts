@@ -335,7 +335,7 @@ class TypeHierarchyProvider implements
           });
     } else {
       vscode.window.showInformationMessage(
-          vscode.l10n.t('typeHierarchy.noneAvailable'));
+          vscode.l10n.t('No type hierarchy available for selection'));
     }
   }
 

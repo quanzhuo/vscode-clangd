@@ -88,7 +88,8 @@ class OverrideMethodsFeature implements vscodelc.StaticFeature {
               });
 
       if (!result.methods || result.methods.length === 0) {
-        vscode.window.showInformationMessage(t('overrideMethods.noMethods'));
+        vscode.window.showInformationMessage(
+            t('No overridable methods available at this position.'));
         return;
       }
 
@@ -109,7 +110,7 @@ class OverrideMethodsFeature implements vscodelc.StaticFeature {
       const selected = await vscode.window.showQuickPick(items, {
         canPickMany: true,
         placeHolder:
-            t('overrideMethods.quickPickPlaceholder', result.targetClass),
+            t('Select methods to override in {0}', result.targetClass),
         ignoreFocusOut: true
       });
 
@@ -137,11 +138,13 @@ class OverrideMethodsFeature implements vscodelc.StaticFeature {
     } catch (error: any) {
       if (error.code === -32601) {
         // Method not found - server doesn't support the feature
-        vscode.window.showWarningMessage(t('overrideMethods.updateRequired'));
+        vscode.window.showWarningMessage(t(
+            'Override methods feature requires a newer version of clangd. Please update your clangd executable.'));
       } else {
         // Other error
         const message = error.message || String(error);
-        vscode.window.showErrorMessage(t('overrideMethods.failed', message));
+        vscode.window.showErrorMessage(
+            t('Failed to override methods: {0}', message));
       }
     }
   }

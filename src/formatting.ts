@@ -9,7 +9,8 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
   const clangFormatPath = await resolveClangFormatPath(context);
   if (!clangFormatPath) {
     vscode.window.showErrorMessage(
-        vscode.l10n.t('formatting.clangFormatNotFound'));
+        vscode.l10n.t(
+            'Clang-format executable not found. Please check your configuration or install clang-format.'));
     return;
   }
 
@@ -25,16 +26,18 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
   const files = await vscode.workspace.findFiles(globPattern, excludePattern);
   if (files.length === 0) {
     vscode.window.showInformationMessage(
-        vscode.l10n.t('formatting.noFilesFound'));
+      vscode.l10n.t('No C/C++ files found to format.'));
     return;
   }
 
   // 4. Confirm action (Destructive & Auto-save warning)
-  const confirmFormat = vscode.l10n.t('formatting.confirmFormat');
-  const cancel = vscode.l10n.t('dialog.cancel');
+    const confirmFormat = vscode.l10n.t('Confirm Format');
+    const cancel = vscode.l10n.t('Cancel');
   const confirm = await vscode.window.showWarningMessage(
-      vscode.l10n.t('formatting.confirmWarning', files.length), confirmFormat,
-      cancel);
+      vscode.l10n.t(
+        'This operation will modify {0} files on disk AND save all open editors. It cannot be undone from VS Code. Ensure your work is committed to Git.',
+        files.length),
+      confirmFormat, cancel);
 
   if (confirm !== confirmFormat) {
     return;
@@ -47,7 +50,7 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
   await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: vscode.l10n.t('formatting.progressTitle'),
+        title: vscode.l10n.t('Formatting Workspace'),
         cancellable: true
       },
       async (progress, token) => {
@@ -95,14 +98,16 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
 
         if (token.isCancellationRequested) {
           vscode.window.showInformationMessage(
-              vscode.l10n.t('formatting.cancelled'));
+              vscode.l10n.t('Workspace formatting cancelled.'));
         } else {
           if (failures > 0) {
             vscode.window.showWarningMessage(
-                vscode.l10n.t('formatting.completedWithFailures', failures));
+                vscode.l10n.t(
+                    'Workspace formatting completed with {0} failures.',
+                    failures));
           } else {
             vscode.window.showInformationMessage(
-                vscode.l10n.t('formatting.completed'));
+                vscode.l10n.t('Workspace formatting completed.'));
           }
         }
       });
