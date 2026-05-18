@@ -1,3 +1,13 @@
+## v0.6.0
+
+Improvements:
+
+* Add a file event synchronization function to monitor the .clangd, .clang-tidy, and compile_flags.txt files
+* Format all workspace files with bundled clang-format
+* Add overloaded method functionality, supporting the retrieval of overloaded methods from Clangd and inserting them into the code
+* Get compile commands via LSP (`settings.compilationDatabaseChanges`)
+* Kylin Clangd now works with the "kylin cmake workflow" extension even without a compile_commands.json file
+
 ## v0.5.0
 
 Improvements:

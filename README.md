@@ -15,26 +15,26 @@ improve C/C++ code by providing:
 
 Full documentation for clangd is at [clangd.llvm.org](https://clangd.llvm.org).
 
-## Kylin Clangd Features
 
-### Bundled Clangd Server
-This extension comes with a bundled and modified `clangd` language server, so you don't need to install it manually. It works out of the box.
-> **Note**: The bundled language server is currently available only for **linux-x64**, **linux-arm64**, and **windows-x64** platforms.
+## Kylin Clangd Enhanced Features
 
-### Enhanced Project Setup
-- **CMake Tools Integration**: Automatically retrieves the compile database path from the CMake Tools extension.
-- **QMake Tools Integration**: (Linux) Supports getting the compile database directory from the QMake Tools plugin.
+- **Bundled clangd language server**  
+    No manual installation required. Prebuilt binaries for linux-x64, linux-arm64, and win32-x64 are included and used by default.
 
-### Configuration Management
-- **Quick Config Creation**: Easily create `.clangd`, `.clang-tidy`, and `.clang-format` files in your workspace.
-- **YAML Support**: Provides auto-completion, validation, and formatting for clangd configuration files (.clangd, .clang-tidy, .clang-format).
-- **New Settings**:
-    - `headerInsertion`: Control header insertion behavior.
-    - `enableClangTidyDiagnostic`: Toggle Clang-Tidy diagnostics.
-    - `preferBundledClangd`: Choose between the bundled or user specified `clangd` server.
+- **CMake Tools integration**  
+    Automatically detects the compile database path from the CMake Tools extension and responds to build command changes in real time.
 
-### Documentation
-- Press `Shift+F1` to quickly jump to relevant documentation.
+- **Quick config file creation**  
+    Instantly generate `.clangd`, `.clang-tidy`, and `.clang-format` files in your workspace.
+
+- **Built-in clang-format**  
+    Includes a clang-format binary and provides a command to format all files in your workspace.
+
+- **YAML config support**  
+    Offers auto-completion, validation, and formatting for `.clangd`, `.clang-tidy`, and `.clang-format` files.
+
+- **Quick documentation access**  
+    Press `Shift+F1` to jump directly to relevant documentation.
 
 ## Setup
 

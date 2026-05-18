@@ -14,3 +14,4 @@
 !res/schemas/**
 !res/config/**
 !res/clangd.tgz
+!res/clang-format*
