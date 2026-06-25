@@ -1,3 +1,9 @@
+## v0.6.1
+
+Bug Fixes:
+
+* 修复代码补全失效的问题
+
 ## v0.6.0
 
 Improvements:

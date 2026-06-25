@@ -2,20 +2,6 @@
 
 [Kylin Clangd](https://github.com/quanzhuo/vscode-clangd) is a fork of [vscode-clangd](https://github.com/clangd/vscode-clangd), designed to provide an enhanced C/C++ development experience. It includes all the features of the original extension with additional improvements and integrations.
 
-[clangd](https://clangd.llvm.org) helps developers write, understand and
-improve C/C++ code by providing:
-
- - code completion
- - compile errors and warnings
- - go-to-definition and cross references
- - hover information and inlay hints
- - include management
- - code formatting
- - simple refactorings
-
-Full documentation for clangd is at [clangd.llvm.org](https://clangd.llvm.org).
-
-
 ## Kylin Clangd Enhanced Features
 
 - **Bundled clangd language server**  
