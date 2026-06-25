@@ -1,0 +1,23 @@
+# Clangd configuration file
+# See https://clangd.llvm.org/config for more information.
+
+# Apply config conditionally (e.g. only for specific files)
+# If:
+#   PathMatch: .*\.h
+
+CompileFlags:
+  # Add flags to the compile command
+  Add:
+    - -Wunused-variable
+    - -Winfinite-recursion
+    - -Warray-bounds
+    - -Wreturn-stack-address
+    - -Werror=implicit-function-declaration
+    - -Wshadow
+    - -Wshadow-field-in-constructor-modified
+    - -Wshadow-ivar
+    - -Wuninitialized
+    - -Wunused-label
+    - -Wunused-lambda-capture
+
+# Press Ctrl+Space to bring up completion suggestions

@@ -6,3 +6,12 @@
 !LICENSE
 !out/bundle.js
 !package.json
+!package.nls.json
+!package.nls.zh-cn.json
+!l10n/**
+!depends.json
+!ThirdPartyNotices.txt
+!res/schemas/**
+!res/config/**
+!res/clangd.tgz
+!res/clang-format*

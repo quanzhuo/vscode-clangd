@@ -1,13 +1,78 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/node';
 
 import {ClangdContext} from './clangd-context';
 import * as config from './config';
+import {extContext} from './extension';
 
 export async function activate(context: ClangdContext) {
   if (await config.get<string>('onConfigChanged') !== 'ignore') {
     context.client.registerFeature(new ConfigFileWatcherFeature(context));
   }
+
+  context.subscriptions.push(
+      vscode.commands.registerCommand(
+          'clangd.createClangdConfigFile',
+          async () => { await createClangdConfigFile(context); }),
+  );
+}
+
+class ClangdConfigFilePickItem implements vscode.QuickPickItem {
+  constructor(
+      public label: string,
+      public detail?: string,
+      public picked?: boolean,
+  ) {}
+}
+
+async function createClangdConfigFile(context: ClangdContext) {
+  await vscode.window
+      .showQuickPick(
+          [
+            new ClangdConfigFilePickItem(
+            '.clangd',
+            vscode.l10n.t(
+              '.clangd is used to configure clangd features (completion, diagnostics, etc.), requires clangd version 11 or later.'),
+            true),
+            new ClangdConfigFilePickItem(
+                '.clang-format',
+            vscode.l10n.t(
+              '.clang-format is used to configure code formatting style.'),
+            true),
+            new ClangdConfigFilePickItem(
+            '.clang-tidy',
+            vscode.l10n.t(
+              '.clang-tidy is used to configure clang-tidy checks and diagnostics.'),
+                false),
+          ],
+          {
+          title: vscode.l10n.t(
+            'Select configure files to create in the workspace folder'),
+            canPickMany: true,
+            ignoreFocusOut: true,
+          })
+      .then(async (items) => {
+        if (!items) {
+          return;
+        }
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders) {
+          return;
+        }
+
+        for (const item of items) {
+          const fileFrom =
+              path.join(extContext!.extensionPath, 'res', 'config', item.label);
+          const filePath =
+              path.join(workspaceFolders[0].uri.fsPath, item.label);
+
+          if (!fs.existsSync(filePath)) {
+            fs.copyFileSync(fileFrom, filePath);
+          }
+        }
+      });
 }
 
 // Clangd extension capabilities.
@@ -90,19 +155,23 @@ class ConfigFileWatcher implements vscode.Disposable {
       break;
     case 'prompt':
     default:
+      const yes = vscode.l10n.t('Yes');
+      const yesAlways = vscode.l10n.t('Yes, always');
+      const noNever = vscode.l10n.t('No, never');
       switch (await vscode.window.showInformationMessage(
-          `Clangd configuration file at '${
-              uri.fsPath}' has been changed. Do you want to restart it?`,
-          'Yes', 'Yes, always', 'No, never')) {
-      case 'Yes':
+          vscode.l10n.t(
+              'Clangd configuration file at {0} has been changed. Do you want to restart it?',
+              uri.fsPath),
+          yes, yesAlways, noNever)) {
+      case yes:
         vscode.commands.executeCommand('clangd.restart');
         break;
-      case 'Yes, always':
+      case yesAlways:
         vscode.commands.executeCommand('clangd.restart');
         config.update<string>('onConfigChanged', 'restart',
                               vscode.ConfigurationTarget.Global);
         break;
-      case 'No, never':
+      case noNever:
         config.update<string>('onConfigChanged', 'ignore',
                               vscode.ConfigurationTarget.Global);
         break;

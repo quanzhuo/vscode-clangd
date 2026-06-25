@@ -1,0 +1,116 @@
+diff --git a/node_modules/yaml-language-server/lib/esm/languageservice/services/yamlCompletion.js b/node_modules/yaml-language-server/lib/esm/languageservice/services/yamlCompletion.js
+index 5701b9b..369912e 100644
+--- a/node_modules/yaml-language-server/lib/esm/languageservice/services/yamlCompletion.js
++++ b/node_modules/yaml-language-server/lib/esm/languageservice/services/yamlCompletion.js
+@@ -67,6 +67,7 @@ export class YamlCompletion {
+         if (currentDoc === null) {
+             return Promise.resolve(result);
+         }
++        currentDoc.currentDocIndex = doc.documents.indexOf(currentDoc);
+         // as we modify AST for completion, we need to use copy of original document
+         currentDoc = currentDoc.clone();
+         let [node, foundByClosest] = currentDoc.getNodeFromPosition(offset, textBuffer, this.indentation.length);
+@@ -290,6 +291,13 @@ export class YamlCompletion {
+             if (node) {
+                 if (lineContent.length === 0) {
+                     node = currentDoc.internalDocument.contents;
++                    if (node && isScalar(node) && node.value === null) {
++                        const map = currentDoc.internalDocument.createNode({});
++                        map.range = [offset, offset + 1, offset + 1];
++                        currentDoc.internalDocument.contents = map;
++                        currentDoc.updateFromInternalDocument();
++                        node = map;
++                    }
+                 }
+                 else {
+                     const parent = currentDoc.getParent(node);
+diff --git a/node_modules/yaml-language-server/lib/esm/languageservice/utils/arrUtils.js b/node_modules/yaml-language-server/lib/esm/languageservice/utils/arrUtils.js
+index eb0dad8..b8ac06c 100644
+--- a/node_modules/yaml-language-server/lib/esm/languageservice/utils/arrUtils.js
++++ b/node_modules/yaml-language-server/lib/esm/languageservice/utils/arrUtils.js
+@@ -41,8 +41,11 @@ export function matchOffsetToDocument(offset, jsonDocuments) {
+             return jsonDoc;
+         }
+     }
+-    if (jsonDocuments.documents.length === 1) {
+-        return jsonDocuments.documents[0];
++    if (jsonDocuments.documents.length > 0) {
++        const lastDoc = jsonDocuments.documents[jsonDocuments.documents.length - 1];
++        if (lastDoc.internalDocument && lastDoc.internalDocument.range[0] <= offset) {
++            return lastDoc;
++        }
+     }
+     return null;
+ }
+diff --git a/node_modules/yaml-language-server/lib/umd/languageservice/services/yamlCompletion.js b/node_modules/yaml-language-server/lib/umd/languageservice/services/yamlCompletion.js
+index 59900de..233ce03 100644
+--- a/node_modules/yaml-language-server/lib/umd/languageservice/services/yamlCompletion.js
++++ b/node_modules/yaml-language-server/lib/umd/languageservice/services/yamlCompletion.js
+@@ -302,6 +302,13 @@
+                 if (node) {
+                     if (lineContent.length === 0) {
+                         node = currentDoc.internalDocument.contents;
++                        if (node && (0, yaml_1.isScalar)(node) && node.value === null) {
++                            const map = currentDoc.internalDocument.createNode({});
++                            map.range = [offset, offset + 1, offset + 1];
++                            currentDoc.internalDocument.contents = map;
++                            currentDoc.updateFromInternalDocument();
++                            node = map;
++                        }
+                     }
+                     else {
+                         const parent = currentDoc.getParent(node);
+diff --git a/node_modules/yaml-language-server/lib/umd/languageservice/utils/arrUtils.js b/node_modules/yaml-language-server/lib/umd/languageservice/utils/arrUtils.js
+index 8718d78..08e18c5 100644
+--- a/node_modules/yaml-language-server/lib/umd/languageservice/utils/arrUtils.js
++++ b/node_modules/yaml-language-server/lib/umd/languageservice/utils/arrUtils.js
+@@ -55,8 +55,11 @@
+                 return jsonDoc;
+             }
+         }
+-        if (jsonDocuments.documents.length === 1) {
+-            return jsonDocuments.documents[0];
++        if (jsonDocuments.documents.length > 0) {
++            const lastDoc = jsonDocuments.documents[jsonDocuments.documents.length - 1];
++            if (lastDoc.internalDocument && lastDoc.internalDocument.range[0] <= offset) {
++                return lastDoc;
++            }
+         }
+         return null;
+     }
+diff --git a/node_modules/yaml-language-server/out/server/src/languageservice/services/yamlCompletion.js b/node_modules/yaml-language-server/out/server/src/languageservice/services/yamlCompletion.js
+index 8d7cd9b..408ceca 100644
+--- a/node_modules/yaml-language-server/out/server/src/languageservice/services/yamlCompletion.js
++++ b/node_modules/yaml-language-server/out/server/src/languageservice/services/yamlCompletion.js
+@@ -293,6 +293,13 @@ class YamlCompletion {
+             if (node) {
+                 if (lineContent.length === 0) {
+                     node = currentDoc.internalDocument.contents;
++                    if (node && (0, yaml_1.isScalar)(node) && node.value === null) {
++                        const map = currentDoc.internalDocument.createNode({});
++                        map.range = [offset, offset + 1, offset + 1];
++                        currentDoc.internalDocument.contents = map;
++                        currentDoc.updateFromInternalDocument();
++                        node = map;
++                    }
+                 }
+                 else {
+                     const parent = currentDoc.getParent(node);
+diff --git a/node_modules/yaml-language-server/out/server/src/languageservice/utils/arrUtils.js b/node_modules/yaml-language-server/out/server/src/languageservice/utils/arrUtils.js
+index d8f5357..e0452a7 100644
+--- a/node_modules/yaml-language-server/out/server/src/languageservice/utils/arrUtils.js
++++ b/node_modules/yaml-language-server/out/server/src/languageservice/utils/arrUtils.js
+@@ -46,8 +46,11 @@ function matchOffsetToDocument(offset, jsonDocuments) {
+             return jsonDoc;
+         }
+     }
+-    if (jsonDocuments.documents.length === 1) {
+-        return jsonDocuments.documents[0];
++    if (jsonDocuments.documents.length > 0) {
++        const lastDoc = jsonDocuments.documents[jsonDocuments.documents.length - 1];
++        if (lastDoc.internalDocument && lastDoc.internalDocument.range[0] <= offset) {
++            return lastDoc;
++        }
+     }
+     return null;
+ }

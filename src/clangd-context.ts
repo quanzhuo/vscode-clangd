@@ -2,16 +2,23 @@ import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/node';
 
 import * as ast from './ast';
+import {CMakeCompileCommands} from './cmakeCompileCommands';
+import {CMakeTools} from './cmakeTools';
 import * as config from './config';
 import * as configFileWatcher from './config-file-watcher';
+import {extContext} from './extension';
 import * as fileStatus from './file-status';
 import * as inactiveRegions from './inactive-regions';
 import * as inlayHints from './inlay-hints';
 import * as install from './install';
 import * as memoryUsage from './memory-usage';
 import * as openConfig from './open-config';
+import * as overrideMethods from './override-methods';
+import {QMakeTools} from './qmakeToolsApi';
 import * as switchSourceHeader from './switch-source-header';
+import * as symbolInfo from './symbol-info';
 import * as typeHierarchy from './type-hierarchy';
+import {ResolvedCompileCommand} from './cmakeToolsApi';
 
 export const clangdDocumentSelector = [
   {scheme: 'file', language: 'c'},
@@ -79,7 +86,8 @@ export class ClangdContext implements vscode.Disposable {
       Promise<ClangdLanguageClient> {
     const useScriptAsExecutable =
         await config.get<boolean>('useScriptAsExecutable');
-    let clangdArguments = await config.get<string[]>('arguments');
+    // let clangdArguments = await config.get<string[]>('arguments');
+    let clangdArguments = await ClangdContext.getClangdArgs();
     if (useScriptAsExecutable) {
       let quote = (str: string) => { return `"${str}"`; };
       clangdPath = quote(clangdPath)
@@ -108,6 +116,10 @@ export class ClangdContext implements vscode.Disposable {
       initializationOptions: {
         clangdFileStatus: true,
         fallbackFlags: await config.get<string[]>('fallbackFlags')
+      },
+      synchronize: {
+        fileEvents: vscode.workspace.createFileSystemWatcher(
+            '**/{.clangd,.clang-tidy,compile_flags.txt}')
       },
       outputChannel: outputChannel,
       // Do not switch to output window when clangd returns output.
@@ -208,14 +220,95 @@ export class ClangdContext implements vscode.Disposable {
       },
     };
 
-    const client = new ClangdLanguageClient('Clang Language Server',
-                                            serverOptions, clientOptions);
+    // Seed open-document compile commands during initialize.
+    // CMakeCompileCommands activates only after client.start(), so it cannot
+    // prevent the first didOpen from falling back when no on-disk CDB exists.
+    await ClangdContext.setCompilationDatabaseOptions(clientOptions);
+
+    const client =
+        new ClangdLanguageClient('Kylin Clangd', serverOptions, clientOptions);
     client.clientOptions.errorHandler = client.createDefaultErrorHandler(
         // max restart count
         await config.get<boolean>('restartAfterCrash') ? /*default*/ 4 : 0);
     client.registerFeature(new EnableEditsNearCursorFeature);
 
     return client;
+  }
+
+  private static async setCompilationDatabaseOptions(
+      clientOptions: vscodelc.LanguageClientOptions) {
+    if (!vscode.workspace.workspaceFolders) {
+      return;
+    }
+
+    const cmakeTools = new CMakeTools();
+    try {
+      await cmakeTools.init();
+
+      if (cmakeTools.cmakeProject?.getCompileCommand) {
+        const commands =
+            await ClangdContext.getOpenDocumentCompileCommands(cmakeTools);
+        if (commands.length > 0) {
+          // clangd overlays per-file commands on top of the directory-based
+          // CDB, so explicit changes win and compilationDatabasePath still
+          // serves as a fallback for files we have not pushed yet.
+          clientOptions.initializationOptions.compilationDatabaseChanges =
+              Object.fromEntries(commands.map((command) => [
+                command.uri.fsPath,
+                {
+                  workingDirectory: command.workingDirectory,
+                  compilationCommand: command.compilationCommand,
+                }
+              ]));
+        }
+      }
+
+      if (cmakeTools.buildDirectory) {
+        clientOptions.initializationOptions.compilationDatabasePath =
+            cmakeTools.buildDirectory;
+        return;
+      }
+    } finally {
+      cmakeTools.dispose();
+    }
+
+    // on linux, try qmake-tools extension if available
+    if (process.platform === 'linux') {
+      let qmakeTools: QMakeTools|undefined;
+      const cmakeFiles =
+          await vscode.workspace.findFiles('CMakeLists.txt', undefined, 1);
+      const proFiles = await vscode.workspace.findFiles('*.pro', undefined, 1);
+      if (cmakeFiles.length === 0 && proFiles.length > 0) {
+        qmakeTools = new QMakeTools(extContext!);
+        await qmakeTools.init();
+
+        if (qmakeTools.buildDirectory) {
+          clientOptions.initializationOptions.compilationDatabasePath =
+              qmakeTools.buildDirectory;
+        }
+      }
+    }
+  }
+
+  private static async getOpenDocumentCompileCommands(
+      cmakeTools: CMakeTools): Promise<ResolvedCompileCommand[]> {
+    const commandsByFile = new Map<string, ResolvedCompileCommand>();
+    const documents = vscode.workspace.textDocuments.filter(
+        (document) => isClangdDocument(document));
+
+    await Promise.all(documents.map(async (document) => {
+      const project = await cmakeTools.getProject(document.uri);
+      if (!project?.getCompileCommand) {
+        return;
+      }
+
+      const command = await project.getCompileCommand(document.uri);
+      if (command) {
+        commandsByFile.set(command.uri.fsPath, command);
+      }
+    }));
+
+    return [...commandsByFile.values()];
   }
 
   private constructor(subscriptions: vscode.Disposable[],
@@ -234,10 +327,15 @@ export class ClangdContext implements vscode.Disposable {
     openConfig.activate(this);
     inactiveRegions.activate(this);
     await configFileWatcher.activate(this);
-    this.client.start();
+    await overrideMethods.activate(this);
+    await this.client.start();
+    const cmakeCompileCommands = new CMakeCompileCommands(this.client);
+    this.subscriptions.push(cmakeCompileCommands);
+    await cmakeCompileCommands.activate();
     console.log('Clang Language Server is now active!');
     fileStatus.activate(this);
     switchSourceHeader.activate(this);
+    symbolInfo.activate(this);
   }
 
   get visibleClangdEditors(): vscode.TextEditor[] {
@@ -251,6 +349,25 @@ export class ClangdContext implements vscode.Disposable {
 
   clientIsRunning() {
     return this.client && this.client.state == vscodelc.State.Running;
+  }
+
+  static async getClangdArgs(): Promise<string[]> {
+    const args = await config.get<string[]>('arguments');
+
+    if (!args.some(arg => arg.startsWith('--header-insertion'))) {
+      const headerInsertion = await config.get<string>('headerInsertion');
+      if (headerInsertion === 'never') {
+        args.push('--header-insertion=never');
+      }
+    }
+
+    if (!args.some(arg => arg.startsWith('--clang-tidy'))) {
+      const clangTidyArgs: number =
+          await config.get<boolean>('enableClangTidyDiagnostic') ? 1 : 0;
+      args.push(`--clang-tidy=${clangTidyArgs}`);
+    }
+
+    return args;
   }
 
   dispose() {

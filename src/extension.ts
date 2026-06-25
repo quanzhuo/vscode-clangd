@@ -5,8 +5,17 @@ import {ClangdExtension} from '../api/vscode-clangd';
 import {ClangdExtensionImpl} from './api';
 import {ClangdContext} from './clangd-context';
 import {get, update} from './config';
+import {formatWorkspace} from './formatting';
+import {activateYamlSupport} from './yaml-support';
 
 let apiInstance: ClangdExtensionImpl|undefined;
+
+/**
+ * ExtensionContext should be passed via function arguments, but to make
+ * minimal changes to vscode-clangd and facilitate following upstream upgrades,
+ * we export extContext here.
+ */
+export let extContext: vscode.ExtensionContext|undefined;
 
 /**
  *  This method is called when the extension is activated. The extension is
@@ -14,7 +23,8 @@ let apiInstance: ClangdExtensionImpl|undefined;
  */
 export async function activate(context: vscode.ExtensionContext):
     Promise<ClangdExtension> {
-  const outputChannel = vscode.window.createOutputChannel('clangd');
+  extContext = context;
+  const outputChannel = vscode.window.createOutputChannel('Kylin Clangd');
   context.subscriptions.push(outputChannel);
 
   let clangdContext: ClangdContext|null = null;
@@ -30,12 +40,15 @@ export async function activate(context: vscode.ExtensionContext):
   context.subscriptions.push(
       vscode.commands.registerCommand('clangd.restart', async () => {
         if (!get<boolean>('enable')) {
+          const enable = vscode.l10n.t('Enable');
+          const close = vscode.l10n.t('Close');
           vscode.window
               .showInformationMessage(
-                  'Language features from Clangd are currently disabled. Would you like to enable them?',
-                  'Enable', 'Close')
+                  vscode.l10n.t(
+                      'Language features from Clangd are currently disabled. Would you like to enable them?'),
+                  enable, close)
               .then(async (choice) => {
-                if (choice === 'Enable') {
+                if (choice === enable) {
                   await update<boolean>('enable', true);
                   vscode.commands.executeCommand('clangd.restart');
                 }
@@ -70,6 +83,8 @@ export async function activate(context: vscode.ExtensionContext):
         if (clangdContext)
           clangdContext.dispose();
       }));
+  context.subscriptions.push(vscode.commands.registerCommand(
+      'clangd.formatWorkspace', () => formatWorkspace(context)));
 
   let shouldCheck = false;
 
@@ -93,18 +108,20 @@ export async function activate(context: vscode.ExtensionContext):
         const cppToolsEnabled =
             cppToolsConfiguration.get<string>('intelliSenseEngine');
         if (cppToolsEnabled?.toLowerCase() !== 'disabled') {
+          const disableIntelliSense =
+            vscode.l10n.t('Disable IntelliSense');
+          const neverShow = vscode.l10n.t('Never show this warning');
           vscode.window
-              .showWarningMessage(
-                  'You have both the Microsoft C++ (cpptools) extension and ' +
-                      'clangd extension enabled. The Microsoft IntelliSense features ' +
-                      'conflict with clangd\'s code completion, diagnostics etc.',
-                  'Disable IntelliSense', 'Never show this warning')
+            .showWarningMessage(
+              vscode.l10n.t(
+                "You have both the Microsoft C++ (cpptools) extension and clangd extension enabled. The Microsoft IntelliSense features conflict with clangd's code completion, diagnostics etc."),
+              disableIntelliSense, neverShow)
               .then(selection => {
-                if (selection == 'Disable IntelliSense') {
+                if (selection == disableIntelliSense) {
                   cppToolsConfiguration.update(
                       'intelliSenseEngine', 'disabled',
                       vscode.ConfigurationTarget.Global);
-                } else if (selection == 'Never show this warning') {
+                } else if (selection == neverShow) {
                   vscode.workspace.getConfiguration('clangd').update(
                       'detectExtensionConflicts', false,
                       vscode.ConfigurationTarget.Global);
@@ -115,6 +132,8 @@ export async function activate(context: vscode.ExtensionContext):
       }
     }, 5000);
   }
+
+  activateYamlSupport(context);
 
   apiInstance = new ClangdExtensionImpl(clangdContext?.client);
   return apiInstance;

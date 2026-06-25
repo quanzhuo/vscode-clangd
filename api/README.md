@@ -6,7 +6,7 @@ The VS Code clangd extension exposes an API that other extensions can consume:
 import * as vscode from 'vscode';
 import type { ClangdExtension, ASTParams, ASTNode } from '@clangd/vscode-clangd';
 
-const CLANGD_EXTENSION = 'llvm-vs-code-extensions.vscode-clangd';
+const CLANGD_EXTENSION = 'KylinIdeTeam.kylin-clangd';
 const CLANGD_API_VERSION = 1;
 
 const ASTRequestMethod = 'textDocument/ast';

@@ -2,10 +2,14 @@
 // This wraps `@clangd/install` in the VSCode UI. See that package for more.
 
 import * as common from '@clangd/install';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import * as tar from 'tar';
 import * as vscode from 'vscode';
 
 import * as config from './config';
+import {extContext} from './extension';
 
 // Returns the clangd path to be used, or null if clangd is not installed.
 export async function activate(disposables: vscode.Disposable[],
@@ -78,9 +82,9 @@ class UI {
   }
 
   async shouldReuse(release: string): Promise<boolean|undefined> {
-    const message = `clangd ${release} is already installed!`;
-    const use = 'Use the installed version';
-    const reinstall = 'Delete it and reinstall';
+    const message = vscode.l10n.t('clangd {0} is already installed!', release);
+    const use = vscode.l10n.t('Use the installed version');
+    const reinstall = vscode.l10n.t('Delete it and reinstall');
     const response =
         await vscode.window.showInformationMessage(message, use, reinstall);
     if (response === use) {
@@ -105,16 +109,17 @@ class UI {
   }
 
   async showHelp(message: string, url: string) {
-    if (await vscode.window.showInformationMessage(message, 'Open website'))
+    if (await vscode.window.showInformationMessage(
+            message, vscode.l10n.t('Open website')))
       vscode.env.openExternal(vscode.Uri.parse(url));
   }
 
   async promptUpdate(oldVersion: string, newVersion: string) {
-    const message = 'An updated clangd language server is available.\n ' +
-                    `Would you like to upgrade to clangd ${newVersion}? ` +
-                    `(from ${oldVersion})`;
-    const update = `Install clangd ${newVersion}`;
-    const dontCheck = 'Don\'t ask again';
+    const message = vscode.l10n.t(
+        'An updated clangd language server is available.\n Would you like to upgrade to clangd {0}? (from {1})',
+        newVersion, oldVersion);
+    const update = vscode.l10n.t('Install clangd {0}', newVersion);
+    const dontCheck = vscode.l10n.t("Don't ask again");
     const response =
         await vscode.window.showInformationMessage(message, update, dontCheck);
     if (response === update) {
@@ -128,16 +133,25 @@ class UI {
     const p = this.clangdPath;
     let message = '';
     if (p.indexOf(path.sep) < 0) {
-      message += `The '${p}' language server was not found on your PATH.\n`;
+      message +=
+          vscode.l10n.t("The '{0}' language server was not found on your PATH.", p) +
+          '\n';
     } else {
-      message += `The clangd binary '${p}' was not found.\n`;
+      message += vscode.l10n.t("The clangd binary '{0}' was not found.", p) +
+          '\n';
     }
-    message += `Would you like to download and install clangd ${version}?`;
-    if (await vscode.window.showInformationMessage(message, 'Install'))
+    message +=
+        vscode.l10n.t('Would you like to download and install clangd {0}?', version);
+    if (await vscode.window.showInformationMessage(
+            message, vscode.l10n.t('Install')))
       common.installLatest(this);
   }
 
   async resolveClangdPath() {
+    if (await this.useBundledClangd()) {
+      return;
+    }
+
     let p = await config.get<string>('path');
     // Backwards compatibility: if it's a relative path with a slash, interpret
     // relative to project root.
@@ -147,6 +161,52 @@ class UI {
     }
 
     this._clangdPath = p;
+  }
+
+  async useBundledClangd(): Promise<boolean> {
+    const workspaceConfig = vscode.workspace.getConfiguration('clangd');
+    const inspectNew = workspaceConfig.inspect<boolean>('preferBundledClangd');
+    const newIsSet = inspectNew?.globalValue !== undefined ||
+                     inspectNew?.workspaceValue !== undefined ||
+                     inspectNew?.workspaceFolderValue !== undefined;
+
+    // `useBuiltInClangdIfAvailable` renamed to `preferBundledClangd` since
+    // v0.5.0 but we still support the old setting for backwards compatibility.
+    const useBundled =
+        newIsSet ? workspaceConfig.get<boolean>('preferBundledClangd')
+                 : workspaceConfig.get<boolean>('useBuiltInClangdIfAvailable');
+
+    if (!useBundled) {
+      return false;
+    }
+
+    const extensionPath = extContext!.extensionPath;
+    const clangdExe = os.platform() === 'win32' ? 'clangd.exe' : 'clangd';
+    const clangdPath =
+        path.join(extensionPath, 'res', 'clangd', 'bin', clangdExe);
+    if (fs.existsSync(clangdPath)) {
+      this._clangdPath = clangdPath;
+      return true;
+    }
+
+    const tgzPath = path.join(extensionPath, 'res', 'clangd.tgz')
+    if (!fs.existsSync(tgzPath)) {
+      return false;
+    }
+
+    // Extract the tarball to the global storage path.
+    const extractPath = path.join(extensionPath, 'res');
+    await this.slow(vscode.l10n.t('Extracting bundled clangd...'), tar.x({
+      file: tgzPath,
+      cwd: extractPath,
+      gzip: true,
+    }));
+
+    if (fs.existsSync(clangdPath)) {
+      this._clangdPath = clangdPath;
+      return true;
+    }
+    return false;
   }
 
   private _clangdPath?: string = undefined;
