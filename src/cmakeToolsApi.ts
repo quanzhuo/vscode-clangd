@@ -154,6 +154,8 @@ export interface Project {
       Promise<ResolvedCompileCommand|undefined>;
 
   getTranslationUnitCompileCommands(): Promise<ResolvedCompileCommand[]>;
+
+  getCompilationDatabaseInfo?(): Promise<CompilationDatabaseInfo>;
 }
 
 export interface CompileCommandsChangeEvent {
@@ -171,6 +173,13 @@ export interface ResolvedCompileCommand {
   configurationName?: string;
   language?: string;
   inferred: boolean;
+}
+
+export interface CompilationDatabaseInfo {
+  state: 'available'|'unavailable'|'unknown';
+  path?: string;
+  generator?: string;
+  reason?: string;
 }
 
 export namespace CodeModel {
