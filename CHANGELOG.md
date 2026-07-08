@@ -1,3 +1,11 @@
+## v0.6.2
+
+Bug Fixes
+
+* 从 cmake tools 获取本次配置是否生成了编译数据库，若生成了编译数据库则不再通过 LSP 重载编译命令
+* clangd 端缓存编译数据库生成信息，避免每次都去请求
+* 发送 document link 请求之前，先请求编译命令
+
 ## v0.6.1
 
 Bug Fixes:
