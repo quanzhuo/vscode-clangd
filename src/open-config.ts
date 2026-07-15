@@ -51,14 +51,48 @@ async function openConfigFile(path: vscode.Uri) {
 export function activate(context: ClangdContext) {
   // Create a command to open the project root .clangd configuration file.
   context.subscriptions.push(
-      vscode.commands.registerCommand('clangd.projectConfig', () => {
-        if (vscode.workspace.workspaceFolders?.length) {
-          const folder = vscode.workspace.workspaceFolders[0];
-          openConfigFile(vscode.Uri.joinPath(folder.uri, '.clangd'))
-        } else {
+      vscode.commands.registerCommand('clangd.projectConfig', async () => {
+        const folders = vscode.workspace.workspaceFolders;
+        if (!folders?.length) {
           vscode.window.showErrorMessage(
               vscode.l10n.t('No project is open.'));
+          return;
         }
+
+        // Try to get the workspace folder of the active text editor
+        const activeEditor = vscode.window.activeTextEditor;
+        let targetFolder: vscode.WorkspaceFolder | undefined;
+        
+        if (activeEditor) {
+          targetFolder = vscode.workspace.getWorkspaceFolder(
+              activeEditor.document.uri);
+        }
+        
+        // If no active editor or editor is not in a workspace folder,
+        // and we have multiple folders, let user choose
+        if (!targetFolder && folders.length > 1) {
+          const items = folders.map(f => ({
+            label: f.name,
+            description: f.uri.fsPath,
+            folder: f
+          }));
+          
+          const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: vscode.l10n.t('Select workspace folder for .clangd config')
+          });
+          
+          if (!selected) {
+            return; // User cancelled
+          }
+          targetFolder = selected.folder;
+        }
+        
+        // Fallback to first folder if still not set
+        if (!targetFolder) {
+          targetFolder = folders[0];
+        }
+        
+        openConfigFile(vscode.Uri.joinPath(targetFolder.uri, '.clangd'));
       }));
 
   context.subscriptions.push(

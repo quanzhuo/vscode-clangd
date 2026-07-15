@@ -4,11 +4,13 @@ import {ClangdExtension} from '../api/vscode-clangd';
 
 import {ClangdExtensionImpl} from './api';
 import {ClangdContext} from './clangd-context';
+import {ClangdContextManager} from './clangd-context-manager';
 import {get, update} from './config';
 import {formatWorkspace} from './formatting';
 import {activateYamlSupport} from './yaml-support';
 
 let apiInstance: ClangdExtensionImpl|undefined;
+let contextManager: ClangdContextManager|undefined;
 
 /**
  * ExtensionContext should be passed via function arguments, but to make
@@ -16,6 +18,13 @@ let apiInstance: ClangdExtensionImpl|undefined;
  * we export extContext here.
  */
 export let extContext: vscode.ExtensionContext|undefined;
+
+/**
+ * Gets the ClangdContextManager instance.
+ */
+export function getContextManager(): ClangdContextManager|undefined {
+  return contextManager;
+}
 
 /**
  *  This method is called when the extension is activated. The extension is
@@ -27,12 +36,15 @@ export async function activate(context: vscode.ExtensionContext):
   const outputChannel = vscode.window.createOutputChannel('Kylin Clangd');
   context.subscriptions.push(outputChannel);
 
-  let clangdContext: ClangdContext|null = null;
+  // Create the context manager for multi-root workspace support
+  contextManager = new ClangdContextManager(outputChannel);
+  context.subscriptions.push(contextManager);
 
   context.subscriptions.push(
       vscode.commands.registerCommand('clangd.activate', async () => {
-        if (clangdContext && (clangdContext.clientIsStarting() ||
-                              clangdContext.clientIsRunning())) {
+        const primaryContext = contextManager?.getPrimaryContext();
+        if (primaryContext && (primaryContext.clientIsStarting() ||
+                              primaryContext.clientIsRunning())) {
           return;
         }
         vscode.commands.executeCommand('clangd.restart');
@@ -62,26 +74,25 @@ export async function activate(context: vscode.ExtensionContext):
         // stop/start cycle in this situation is pointless, and doesn't work
         // anyways because the client can't be stop()-ped when it's still in the
         // Starting state).
-        if (clangdContext && clangdContext.clientIsStarting()) {
+        const primaryContext = contextManager?.getPrimaryContext();
+        if (primaryContext && primaryContext.clientIsStarting()) {
           return;
         }
-        if (clangdContext)
-          clangdContext.dispose();
-        clangdContext = await ClangdContext.create(context.globalStoragePath,
-                                                   outputChannel);
-        if (clangdContext)
-          context.subscriptions.push(clangdContext);
+        
+        // Restart all contexts for multi-root workspace support
+        await contextManager?.restartAll();
+        
         if (apiInstance) {
-          apiInstance.client = clangdContext?.client;
+          apiInstance.client = contextManager?.getPrimaryContext()?.client;
         }
       }));
   context.subscriptions.push(
       vscode.commands.registerCommand('clangd.shutdown', async () => {
-        if (clangdContext && clangdContext.clientIsStarting()) {
+        const primaryContext = contextManager?.getPrimaryContext();
+        if (primaryContext && primaryContext.clientIsStarting()) {
           return;
         }
-        if (clangdContext)
-          clangdContext.dispose();
+        contextManager?.shutdownAll();
       }));
   context.subscriptions.push(vscode.commands.registerCommand(
       'clangd.formatWorkspace', () => formatWorkspace(context)));
@@ -89,10 +100,8 @@ export async function activate(context: vscode.ExtensionContext):
   let shouldCheck = false;
 
   if (vscode.workspace.getConfiguration('clangd').get<boolean>('enable')) {
-    clangdContext =
-        await ClangdContext.create(context.globalStoragePath, outputChannel);
-    if (clangdContext)
-      context.subscriptions.push(clangdContext);
+    // Initialize the context manager for multi-root workspace support
+    await contextManager.initialize(context.globalStoragePath);
 
     shouldCheck = vscode.workspace.getConfiguration('clangd').get<boolean>(
                       'detectExtensionConflicts') ??
@@ -135,6 +144,6 @@ export async function activate(context: vscode.ExtensionContext):
 
   activateYamlSupport(context);
 
-  apiInstance = new ClangdExtensionImpl(clangdContext?.client);
+  apiInstance = new ClangdExtensionImpl(contextManager?.getPrimaryContext()?.client);
   return apiInstance;
 }

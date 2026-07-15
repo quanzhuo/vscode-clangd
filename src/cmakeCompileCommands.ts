@@ -114,7 +114,7 @@ async function getCompilationDatabaseAvailability(project: Project,
 
 export class CMakeCompileCommands implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
-  private readonly cmakeTools = new CMakeTools();
+  private cmakeTools: CMakeTools | undefined;
   private activeProjectDisposables: vscode.Disposable[] = [];
   private activeProject: Project|undefined;
   private readonly fullSyncProjects = new WeakSet<Project>();
@@ -123,10 +123,16 @@ export class CMakeCompileCommands implements vscode.Disposable {
   private ready = false;
 
   constructor(private readonly client: vscodelc.LanguageClient,
-              private readonly outputChannel: vscode.OutputChannel) {}
+              private readonly outputChannel: vscode.OutputChannel,
+              private readonly workspaceFolder?: vscode.WorkspaceFolder) {}
 
   async activate(): Promise<void> {
+    // Create CMakeTools for the specific workspace folder
+    this.cmakeTools = new CMakeTools(undefined, this.workspaceFolder!);
     await this.cmakeTools.init();
+    if (!this.cmakeTools) {
+      return;
+    }
     this.disposables.push(this.cmakeTools);
 
     const api = this.cmakeTools.cmakeToolsApi;
@@ -157,6 +163,9 @@ export class CMakeCompileCommands implements vscode.Disposable {
 
   private async onActiveProjectChanged(uri: vscode.Uri|undefined):
       Promise<void> {
+    if (!this.cmakeTools) {
+      return;
+    }
     const project = uri ? await this.cmakeTools.getProject(uri) :
                           this.cmakeTools.cmakeProject;
     await this.bindProject(project);
@@ -212,8 +221,12 @@ export class CMakeCompileCommands implements vscode.Disposable {
       return;
     }
 
+    if (!this.cmakeTools) {
+      return;
+    }
+    const cmakeTools = this.cmakeTools;
     await Promise.all(event.files.map(async (uri) => {
-      const project = await this.cmakeTools.getProject(uri);
+      const project = await cmakeTools.getProject(uri);
       if (!project?.getCompileCommand) {
         return;
       }
@@ -241,6 +254,9 @@ export class CMakeCompileCommands implements vscode.Disposable {
       return;
     }
 
+    if (!this.cmakeTools) {
+      return;
+    }
     const project = await this.cmakeTools.getProject(document.uri);
     if (!project?.getCompileCommand) {
       return;

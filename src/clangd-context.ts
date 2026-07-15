@@ -42,7 +42,7 @@ export function isClangdDocument(document: vscode.TextDocument) {
   return vscode.languages.match(clangdDocumentSelector, document);
 }
 
-class ClangdLanguageClient extends vscodelc.LanguageClient {
+export class ClangdLanguageClient extends vscodelc.LanguageClient {
   // Override the default implementation for failed requests. The default
   // behavior is just to log failures in the output panel, however output panel
   // is designed for extension debugging purpose, normal users will not open it,
@@ -54,6 +54,18 @@ class ClangdLanguageClient extends vscodelc.LanguageClient {
   handleFailedRequest<T>(type: vscodelc.MessageSignature, error: any,
                          token: vscode.CancellationToken|undefined,
                          defaultValue: T): T {
+    // Handle command registration conflicts in multi-root workspaces.
+    // When multiple clangd clients try to register the same commands
+    // (e.g., clangd.applyFix), the second client will fail with an error.
+    // We need to ignore these specific errors and return the default value.
+    if (error && error.message &&
+        (error.message.includes('command already exists') ||
+         error.message.includes('is already registered') ||
+         error.message.includes('already exists'))) {
+      console.log(`[ClangdLanguageClient] Ignoring command registration conflict for ${type.method}`);
+      return defaultValue;
+    }
+
     if (error instanceof vscodelc.ResponseError &&
         type.method === 'workspace/executeCommand')
       vscode.window.showErrorMessage(error.message);
@@ -76,6 +88,7 @@ class EnableEditsNearCursorFeature implements vscodelc.StaticFeature {
 export class ClangdContext implements vscode.Disposable {
   subscriptions: vscode.Disposable[];
   client: ClangdLanguageClient;
+  workspaceFolder: vscode.WorkspaceFolder | undefined;
 
   static async create(globalStoragePath: string,
                       outputChannel: vscode.OutputChannel):
@@ -93,9 +106,44 @@ export class ClangdContext implements vscode.Disposable {
             clangdPath, outputChannel, subscriptions));
   }
 
+  /**
+   * Creates a ClangdContext for a specific workspace folder.
+   * This is used for multi-root workspace support.
+   */
+  static async createForFolder(globalStoragePath: string,
+                               outputChannel: vscode.OutputChannel,
+                               folder: vscode.WorkspaceFolder):
+      Promise<ClangdContext|null> {
+    const subscriptions: vscode.Disposable[] = [];
+    const clangdPath = await install.activate(subscriptions, globalStoragePath);
+    if (!clangdPath) {
+      subscriptions.forEach((d) => { d.dispose(); });
+      return null;
+    }
+
+    const context = new ClangdContext(
+        subscriptions,
+        await ClangdContext.createClientForFolder(
+            clangdPath, outputChannel, subscriptions, folder));
+    context.workspaceFolder = folder;
+    return context;
+  }
+
   private static async createClient(clangdPath: string,
                                     outputChannel: vscode.OutputChannel,
                                     subscriptions: vscode.Disposable[]):
+      Promise<ClangdLanguageClient> {
+    // For backwards compatibility, use the first workspace folder if available
+    const folders = vscode.workspace.workspaceFolders;
+    const folder = folders && folders.length > 0 ? folders[0] : undefined;
+    return ClangdContext.createClientForFolder(
+        clangdPath, outputChannel, subscriptions, folder);
+  }
+
+  private static async createClientForFolder(clangdPath: string,
+                                             outputChannel: vscode.OutputChannel,
+                                             subscriptions: vscode.Disposable[],
+                                             folder: vscode.WorkspaceFolder | undefined):
       Promise<ClangdLanguageClient> {
     const useScriptAsExecutable =
         await config.get<boolean>('useScriptAsExecutable');
@@ -112,7 +160,7 @@ export class ClangdContext implements vscode.Disposable {
       command: clangdPath,
       args: clangdArguments,
       options: {
-        cwd: vscode.workspace.rootPath || process.cwd(),
+        cwd: folder?.uri.fsPath || vscode.workspace.rootPath || process.cwd(),
         shell: useScriptAsExecutable
       }
     };
@@ -124,7 +172,7 @@ export class ClangdContext implements vscode.Disposable {
     const serverOptions: vscodelc.ServerOptions = clangd;
     let client: ClangdLanguageClient|undefined;
     const didOpenTasks = new Map<string, Promise<void>>();
-    const cmakeTools = new CMakeTools();
+    const cmakeTools = new CMakeTools(undefined, folder!);
     await cmakeTools.init();
     subscriptions.push(cmakeTools);
 
@@ -477,7 +525,7 @@ export class ClangdContext implements vscode.Disposable {
     await overrideMethods.activate(this);
     await this.client.start();
     const cmakeCompileCommands =
-        new CMakeCompileCommands(this.client, this.client.outputChannel);
+        new CMakeCompileCommands(this.client, this.client.outputChannel, this.workspaceFolder);
     this.subscriptions.push(cmakeCompileCommands);
     await cmakeCompileCommands.activate();
     console.log('Clang Language Server is now active!');

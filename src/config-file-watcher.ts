@@ -28,6 +28,46 @@ class ClangdConfigFilePickItem implements vscode.QuickPickItem {
 }
 
 async function createClangdConfigFile(context: ClangdContext) {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders) {
+    vscode.window.showErrorMessage(vscode.l10n.t('No project is open.'));
+    return;
+  }
+
+  // If there's only one workspace folder, use it directly
+  // Otherwise, let user choose which folder to create config files in
+  let targetFolder: vscode.WorkspaceFolder;
+  
+  if (workspaceFolders.length === 1) {
+    targetFolder = workspaceFolders[0];
+  } else {
+    // Try to get the workspace folder of the active text editor
+    const activeEditor = vscode.window.activeTextEditor;
+    const activeFolder = activeEditor
+        ? vscode.workspace.getWorkspaceFolder(activeEditor.document.uri)
+        : undefined;
+    
+    if (activeFolder) {
+      targetFolder = activeFolder;
+    } else {
+      // Let user choose
+      const items = workspaceFolders.map(f => ({
+        label: f.name,
+        description: f.uri.fsPath,
+        folder: f
+      }));
+      
+      const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: vscode.l10n.t('Select workspace folder to create config files')
+      });
+      
+      if (!selected) {
+        return; // User cancelled
+      }
+      targetFolder = selected.folder;
+    }
+  }
+
   await vscode.window
       .showQuickPick(
           [
@@ -49,7 +89,7 @@ async function createClangdConfigFile(context: ClangdContext) {
           ],
           {
           title: vscode.l10n.t(
-            'Select configure files to create in the workspace folder'),
+            'Select configure files to create in {0}', targetFolder.name),
             canPickMany: true,
             ignoreFocusOut: true,
           })
@@ -57,16 +97,12 @@ async function createClangdConfigFile(context: ClangdContext) {
         if (!items) {
           return;
         }
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders) {
-          return;
-        }
 
         for (const item of items) {
           const fileFrom =
               path.join(extContext!.extensionPath, 'res', 'config', item.label);
           const filePath =
-              path.join(workspaceFolders[0].uri.fsPath, item.label);
+              path.join(targetFolder.uri.fsPath, item.label);
 
           if (!fs.existsSync(filePath)) {
             fs.copyFileSync(fileFrom, filePath);
