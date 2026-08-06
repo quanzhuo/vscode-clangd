@@ -16,11 +16,14 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
 
   // 2. Resolve glob patterns
   const config = vscode.workspace.getConfiguration('clangd.formatting');
-  const globPattern = config.get<string>('includePattern') ||
-                      '**/*.{c,cpp,h,hpp,cc,cxx,m,mm,cu,inc}';
-  const excludePattern = config.get<string>('excludePattern') ||
-                         '**/build/**,**/out/**,**/cmake-build-*/**';
+  const globPattern = normalizeGlobPattern(
+      config.get<string>('includePattern') ||
+      '**/*.{c,cpp,h,hpp,cc,cxx,m,mm,cu,inc}');
+  const excludePattern = normalizeGlobPattern(
+      config.get<string>('excludePattern') ||
+      '**/build/**,**/out/**,**/cmake-build-*/**');
   const concurrencyLevel = config.get<number>('concurrency', 0);
+  const timeoutMs = config.get<number>('timeoutMs', 15000);
 
   // 3. Find files
   const files = await vscode.workspace.findFiles(globPattern, excludePattern);
@@ -57,6 +60,7 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
         const total = files.length;
         let processed = 0;
         let failures = 0;
+        const failureDetails: string[] = [];
 
         // Determine concurrency
         const workerCount =
@@ -67,15 +71,21 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
           if (token.isCancellationRequested)
             return;
 
+          const relativePath = vscode.workspace.asRelativePath(file, false);
           try {
             await runClangFormat(clangFormatPath,
-                                 ['-i', '-style=file', file.fsPath]);
+                                 ['-i', '-style=file', file.fsPath],
+                                 {timeoutMs, token});
           } catch (e: any) {
             failures++;
+            if (failureDetails.length < 5) {
+              const message = e instanceof Error ? e.message : String(e);
+              failureDetails.push(`${relativePath}: ${message}`);
+            }
           } finally {
             processed++;
             progress.report({
-              message: `${processed}/${total} (Errors: ${failures})`,
+              message: `${processed}/${total} (Errors: ${failures}) ${relativePath}`,
               increment: (1 / total) * 100
             });
           }
@@ -104,13 +114,52 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
             vscode.window.showWarningMessage(
                 vscode.l10n.t(
                     'Workspace formatting completed with {0} failures.',
-                    failures));
+                    failures) +
+                (failureDetails.length > 0 ?
+                     ` ${failureDetails.join('; ')}` :
+                     ''));
           } else {
             vscode.window.showInformationMessage(
                 vscode.l10n.t('Workspace formatting completed.'));
           }
         }
       });
+}
+
+function normalizeGlobPattern(pattern: string): string {
+  const parts = splitTopLevelCommaSeparated(pattern);
+  return parts.length > 1 ? `{${parts.join(',')}}` : pattern;
+}
+
+function splitTopLevelCommaSeparated(pattern: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let braceDepth = 0;
+
+  for (const char of pattern) {
+    if (char === '{') {
+      braceDepth++;
+    } else if (char === '}') {
+      braceDepth = Math.max(0, braceDepth - 1);
+    }
+
+    if (char === ',' && braceDepth === 0) {
+      const part = current.trim();
+      if (part.length > 0) {
+        parts.push(part);
+      }
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  const lastPart = current.trim();
+  if (lastPart.length > 0) {
+    parts.push(lastPart);
+  }
+  return parts;
 }
 
 async function resolveClangFormatPath(context: vscode.ExtensionContext):
@@ -143,14 +192,50 @@ async function resolveClangFormatPath(context: vscode.ExtensionContext):
   return undefined;
 }
 
-function runClangFormat(command: string, args: string[]): Promise<void> {
+interface ClangFormatOptions {
+  timeoutMs: number;
+  token?: vscode.CancellationToken;
+}
+
+function runClangFormat(command: string, args: string[],
+                        options?: ClangFormatOptions): Promise<void> {
   return new Promise((resolve, reject) => {
-    cp.execFile(command, args, (err) => {
-      if (err) {
-        reject(err);
+    let settled = false;
+    let timeout: NodeJS.Timeout|undefined;
+    let cancellation: vscode.Disposable|undefined;
+
+    const finish = (error?: Error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+      cancellation?.dispose();
+
+      if (error) {
+        reject(error);
       } else {
         resolve();
       }
+    };
+
+    const child = cp.execFile(command, args, {windowsHide: true}, (err) => {
+      finish(err ?? undefined);
+    });
+
+    timeout = options?.timeoutMs && options.timeoutMs > 0 ?
+        setTimeout(() => {
+          finish(new Error(`clang-format timed out after ${options.timeoutMs}ms`));
+          child.kill();
+        }, options.timeoutMs) :
+        undefined;
+
+    cancellation = options?.token?.onCancellationRequested(() => {
+      finish(new Error('clang-format cancelled.'));
+      child.kill();
     });
   });
 }

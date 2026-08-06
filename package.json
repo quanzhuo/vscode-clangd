@@ -250,13 +250,18 @@
                 },
                 "clangd.formatting.excludePattern": {
                     "type": "string",
-                    "default": "**/build/**,**/out/**,**/cmake-build-*/**",
+                    "default": "{**/build/**,**/out/**,**/cmake-build-*/**}",
                     "description": "%clangd.formatting.excludePattern.description%"
                 },
                 "clangd.formatting.concurrency": {
                     "type": "number",
                     "default": 0,
                     "description": "%clangd.formatting.concurrency.description%"
+                },
+                "clangd.formatting.timeoutMs": {
+                    "type": "number",
+                    "default": 15000,
+                    "description": "%clangd.formatting.timeoutMs.description%"
                 },
                 "clangd.headerInsertion": {
                     "type": "string",
