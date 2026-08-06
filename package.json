@@ -57,6 +57,7 @@
     },
     "dependencies": {
         "@clangd/install": "0.1.20",
+        "ignore": "^7.0.6",
         "tar": "^7.5.2",
         "vscode-languageclient": "^9.0.1",
         "vscode-languageserver-textdocument": "^1.0.12",
@@ -262,6 +263,11 @@
                     "type": "number",
                     "default": 15000,
                     "description": "%clangd.formatting.timeoutMs.description%"
+                },
+                "clangd.formatting.respectGitIgnore": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%clangd.formatting.respectGitIgnore.description%"
                 },
                 "clangd.headerInsertion": {
                     "type": "string",

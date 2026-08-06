@@ -31,6 +31,7 @@
     "clangd.formatting.excludePattern.description": "工作区格式化时要排除的文件的 Glob 模式。",
     "clangd.formatting.concurrency.description": "并发运行 clang-format 进程的数量。设置为 0 以使用逻辑 CPU 的数量。",
     "clangd.formatting.timeoutMs.description": "单个文件运行 clang-format 的最长等待时间（毫秒）。设置为 0 表示禁用超时。",
+    "clangd.formatting.respectGitIgnore.description": "格式化工作区时排除被工作区根目录 .gitignore 忽略的文件。",
     "clangd.headerInsertion.description": "控制 clangd 如何插入缺失的 #include 指令。",
     "clangd.headerInsertion.enumDescriptions.0": "始终包含规范头文件，即使它已经被传递包含",
     "clangd.headerInsertion.enumDescriptions.1": "从不自动插入缺失的 #include 指令",

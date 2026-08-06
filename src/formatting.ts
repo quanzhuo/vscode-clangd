@@ -1,5 +1,6 @@
 import * as cp from 'child_process';
 import * as fs from 'fs';
+import ignore = require('ignore');
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -24,9 +25,14 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
       '**/build/**,**/out/**,**/cmake-build-*/**');
   const concurrencyLevel = config.get<number>('concurrency', 0);
   const timeoutMs = config.get<number>('timeoutMs', 15000);
+  const respectGitIgnore = config.get<boolean>('respectGitIgnore', true);
 
   // 3. Find files
-  const files = await vscode.workspace.findFiles(globPattern, excludePattern);
+  let files = await vscode.workspace.findFiles(globPattern, excludePattern);
+  if (respectGitIgnore) {
+    files = await filterGitIgnoredFiles(files);
+  }
+
   if (files.length === 0) {
     vscode.window.showInformationMessage(
       vscode.l10n.t('No C/C++ files found to format.'));
@@ -160,6 +166,55 @@ function splitTopLevelCommaSeparated(pattern: string): string[] {
     parts.push(lastPart);
   }
   return parts;
+}
+
+async function filterGitIgnoredFiles(files: vscode.Uri[]):
+    Promise<vscode.Uri[]> {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders) {
+    return files;
+  }
+
+  const filters = new Map<string, ignore.Ignore|null>();
+  for (const folder of workspaceFolders) {
+    filters.set(folder.uri.fsPath, await loadGitIgnore(folder.uri.fsPath));
+  }
+
+  return files.filter(file => {
+    const folder = vscode.workspace.getWorkspaceFolder(file);
+    if (!folder) {
+      return true;
+    }
+
+    const filter = filters.get(folder.uri.fsPath);
+    if (!filter) {
+      return true;
+    }
+
+    const relativePath = toGitIgnorePath(
+        path.relative(folder.uri.fsPath, file.fsPath));
+    return !filter.ignores(relativePath);
+  });
+}
+
+async function loadGitIgnore(workspaceFolderPath: string):
+    Promise<ignore.Ignore|null> {
+  const gitIgnorePath = path.join(workspaceFolderPath, '.gitignore');
+
+  try {
+    const contents = await fs.promises.readFile(gitIgnorePath, 'utf8');
+    return ignore().add(contents);
+  } catch (e: any) {
+    if (e?.code === 'ENOENT') {
+      return null;
+    }
+
+    throw e;
+  }
+}
+
+function toGitIgnorePath(filePath: string): string {
+  return filePath.split(path.sep).join('/');
 }
 
 async function resolveClangFormatPath(context: vscode.ExtensionContext):
