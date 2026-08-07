@@ -1,24 +1,52 @@
-# base style
 BasedOnStyle: LLVM
 
-# indent
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
 AccessModifierOffset: -4
+ContinuationIndentWidth: 4
+AlignAfterOpenBracket: DontAlign
+AlignOperands: DontAlign
 
-# header/using sort
-SortIncludes: CaseInsensitive
-SortUsingDeclarations: true
+ColumnLimit: 120
 
-# constructor initializer settings
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+
+SortIncludes: Never
+SortUsingDeclarations: false
+FixNamespaceComments: false
+
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+
+AlignTrailingComments:
+  Kind: Leave
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
 PackConstructorInitializers: Never
 BreakConstructorInitializersBeforeComma: true
 
-# line length settings
-ColumnLimit: 0
-
-# macro alignment settings
 AlignConsecutiveMacros:
   Enabled: true
   AcrossEmptyLines: false
@@ -27,5 +55,3 @@ AlignConsecutiveMacros:
   PadOperators: true
 
 AlignEscapedNewlines: Right
-
-# for more options, type ctrl + space to bring up the auto-completion list

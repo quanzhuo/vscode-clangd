@@ -26,6 +26,8 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
   const concurrencyLevel = config.get<number>('concurrency', 0);
   const timeoutMs = config.get<number>('timeoutMs', 15000);
   const respectGitIgnore = config.get<boolean>('respectGitIgnore', true);
+  const bundledStylePath =
+      path.join(context.extensionPath, 'res', 'config', '.clang-format');
 
   // 3. Find files
   let files = await vscode.workspace.findFiles(globPattern, excludePattern);
@@ -67,6 +69,7 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
         let processed = 0;
         let failures = 0;
         const failureDetails: string[] = [];
+        const styleLookupCache = new Map<string, Promise<boolean>>();
 
         // Determine concurrency
         const workerCount =
@@ -79,8 +82,11 @@ export async function formatWorkspace(context: vscode.ExtensionContext) {
 
           const relativePath = vscode.workspace.asRelativePath(file, false);
           try {
+            const styleArg =
+                await resolveClangFormatStyleArg(file, bundledStylePath,
+                                                 styleLookupCache);
             await runClangFormat(clangFormatPath,
-                                 ['-i', '-style=file', file.fsPath],
+                                 ['-i', styleArg, file.fsPath],
                                  {timeoutMs, token});
           } catch (e: any) {
             failures++;
@@ -215,6 +221,87 @@ async function loadGitIgnore(workspaceFolderPath: string):
 
 function toGitIgnorePath(filePath: string): string {
   return filePath.split(path.sep).join('/');
+}
+
+async function resolveClangFormatStyleArg(
+    file: vscode.Uri, bundledStylePath: string,
+    styleLookupCache: Map<string, Promise<boolean>>): Promise<string> {
+  const folder = vscode.workspace.getWorkspaceFolder(file);
+  if (folder) {
+    const hasWorkspaceStyle = await hasClangFormatStyleInPath(
+        path.dirname(file.fsPath), folder.uri.fsPath, styleLookupCache);
+    if (hasWorkspaceStyle) {
+      return '-style=file';
+    }
+  }
+
+  if (await pathExists(bundledStylePath)) {
+    return `-style=file:${bundledStylePath}`;
+  }
+
+  return '-style=file';
+}
+
+async function hasClangFormatStyleInPath(
+    directory: string, workspaceFolderPath: string,
+    cache: Map<string, Promise<boolean>>): Promise<boolean> {
+  const resolvedDirectory = path.resolve(directory);
+  const resolvedWorkspaceFolder = path.resolve(workspaceFolderPath);
+
+  if (!isPathInsideOrEqual(resolvedDirectory, resolvedWorkspaceFolder)) {
+    return false;
+  }
+
+  const cacheKey = normalizePathKey(resolvedDirectory);
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const lookup = (async () => {
+    if (await pathExists(path.join(resolvedDirectory, '.clang-format'))) {
+      return true;
+    }
+
+    if (samePath(resolvedDirectory, resolvedWorkspaceFolder)) {
+      return false;
+    }
+
+    const parent = path.dirname(resolvedDirectory);
+    if (samePath(parent, resolvedDirectory)) {
+      return false;
+    }
+
+    return hasClangFormatStyleInPath(parent, resolvedWorkspaceFolder, cache);
+  })();
+
+  cache.set(cacheKey, lookup);
+  return lookup;
+}
+
+async function pathExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.promises.access(filePath, fs.constants.F_OK);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function isPathInsideOrEqual(childPath: string, parentPath: string): boolean {
+  const relativePath = path.relative(parentPath, childPath);
+  return relativePath === '' ||
+         (!relativePath.startsWith('..') && !path.isAbsolute(relativePath));
+}
+
+function samePath(left: string, right: string): boolean {
+  return normalizePathKey(left) === normalizePathKey(right);
+}
+
+function normalizePathKey(filePath: string): string {
+  const resolvedPath = path.resolve(filePath);
+  return process.platform === 'win32' ? resolvedPath.toLowerCase() :
+                                       resolvedPath;
 }
 
 async function resolveClangFormatPath(context: vscode.ExtensionContext):
