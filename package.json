@@ -2,7 +2,7 @@
     "name": "kylin-clangd",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.6.2",
+    "version": "0.6.3",
     "publisher": "KylinIdeTeam",
     "license": "MIT",
     "homepage": "https://github.com/quanzhuo/vscode-clangd",

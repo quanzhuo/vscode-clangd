@@ -1,3 +1,14 @@
+## v0.6.3
+
+Bug Fixes
+
+* 修复工作区格式化卡住的问题
+
+Improvements
+
+* 工作区格式化时，忽略 git 忽略的文件
+* 格式化工作区时，默认使用插件内置 .clang-format 文件
+
 ## v0.6.2
 
 Bug Fixes
