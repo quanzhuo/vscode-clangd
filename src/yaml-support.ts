@@ -39,7 +39,8 @@ export function activateYamlSupport(context: vscode.ExtensionContext) {
 
       // Handle base.json redirection
       if (uri === 'https://json.schemastore.org/base.json' ||
-          uri === 'http://json.schemastore.org/base.json') {
+          uri === 'http://json.schemastore.org/base.json' ||
+          uri.endsWith('base.json')) {
         const schemaPath =
             path.join(context.extensionPath, 'res', 'schemas', 'base.json');
         try {
@@ -62,9 +63,18 @@ export function activateYamlSupport(context: vscode.ExtensionContext) {
       return '';
     },
     workspaceContext: {
-      resolveRelativePath:
-          (relativePath,
-           resource) => { return vscode.Uri.file(relativePath).toString(); }
+      resolveRelativePath: (relativePath, resource) => {
+        if (/^(https?|internal):/i.test(relativePath)) {
+          return relativePath;
+        }
+        try {
+          return vscode.Uri
+              .joinPath(vscode.Uri.parse(resource), '..', relativePath)
+              .toString();
+        } catch {
+          return vscode.Uri.file(relativePath).toString();
+        }
+      }
     }
   });
 
